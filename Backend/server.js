@@ -1,75 +1,174 @@
 import express from 'express';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 import cors from 'cors';
-// import tollRoutes from './routes/tollPlazas.js';
-// import userRoutes from './routes/users.js';
-import transactionRoutes from './routes/transactions.js';
-import dashboardRoutes from './routes/dashboard.js';
-import authRoutes from './routes/authRoutes.js';
-import userRoutes from './routes/userRoutes.js';
-
-dotenv.config();
+import axios from 'axios';
 
 const app = express();
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  }),
+)
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+app.use(express.json())
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI,{
-  // useNewUrlParser: true,
-  // useUnifiedTopology: true,
-  // w: 'majority',
-  // retryWrites: true,
-})
-.then(() => {
-  console.log('Connected to MongoDB Atlas');
-  console.log('Database Name:', mongoose.connection.db.databaseName);
-})
-.catch((err) => {
-  console.error('MongoDB connection error:', err);
-});
-  
-// Root route
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Welcome to the Toll Management System API',
-    version: '1.0.0',
-    endpoints: {
-    //   users: '/api/users',
-      tolls: '/api/tolls',
-      transactions: '/api/transactions'
-    }
-  });
-});
-// Add this route to your server.js file
-app.post('/api/test', async (req, res) => {
+const API_BASE_URL = "https://corp.fareclubs.com/restwebsvc"
+
+app.post("/api/auth", async (req, res) => {
   try {
-    // This will create a test collection and document
-    const testCollection = mongoose.connection.collection('test');
-    await testCollection.insertOne({ test: 'data', timestamp: new Date() });
-    
-    res.json({ 
-      message: 'Database connection successful', 
-      database: mongoose.connection.db.databaseName 
-    });
+    const response = await axios.post(`${API_BASE_URL}/auth/loginV1`, req.body, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    })
+
+    if (response.headers["set-cookie"]) {
+      response.headers["set-cookie"].forEach((cookie) => {
+        res.setHeader("Set-Cookie", cookie)
+      })
+    }
+
+    res.json(response.data)
   } catch (error) {
-    console.error('Test route error:', error);
-    res.status(500).json({ error: error.message });
+    console.error("Authentication error:", error.response?.data || error.message)
+    res.status(error.response?.status || 500).json({
+      Status: "Failed",
+      Description: error.response?.data?.Description || "Authentication failed",
+      StatusCode: error.response?.status || 500,
+    })
   }
-});
-// Routes
-// app.use('/api/users', userRoutes);
-// app.use('/api/tolls', tollRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/transactions', transactionRoutes);
-app.use('/api/dashboard', dashboardRoutes);
+})
 
+app.post("/api/air/search", async (req, res) => {
+  try {
+    const { Data, sessionId } = req.body
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+    // Construct the exact request format that works in Postman
+    const requestData = {
+      Data: {
+        IsMobileSearchQuery: "N",
+        MaxOptionsCount: "10",
+        TravelType: "D",
+        JourneyType: "O",
+        IsPersonalBooking: "N",
+        AirOriginDestinations: [
+          {
+            DepartureAirport: Data.AirOriginDestinations[0].DepartureAirport,
+            ArrivalAirport: Data.AirOriginDestinations[0].ArrivalAirport,
+            DepartureDate: Data.AirOriginDestinations[0].DepartureDate,
+          },
+        ],
+        AirPassengerQuantities: {
+          NumAdults: Data.AirPassengerQuantities.NumAdults,
+          NumChildren: 0,
+          NumInfants: 0,
+        },
+        AirSearchPreferences: {
+          BookingClass: "G",
+          Carrier: "ANY",
+        },
+        SearchLevelReportingParams: {
+          BillingEntityCode: 0,
+        },
+      },
+    }
+
+    console.log("Sending request to API:", JSON.stringify(requestData, null, 2))
+
+    const response = await axios.post(`${API_BASE_URL}/air/searchV1`, requestData, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Cookie: `JSESSIONID=${sessionId}`,
+      },
+    })
+
+    console.log("Raw API response:", JSON.stringify(response.data, null, 2))
+
+    // Send the complete response without processing
+    res.json(response.data)
+  } catch (error) {
+    console.error("Air search error:", error.response?.data || error.message)
+    res.status(error.response?.status || 500).json({
+      Status: "Failed",
+      Description: error.response?.data?.Description || "Air search failed",
+      StatusCode: error.response?.status || 500,
+    })
+  }
+})
+
+app.post("/api/air/reprice", async (req, res) => {
+  try {
+    const { SearchFormData, AirOriginDestinationOptions } = req.body
+    const sessionId = req.headers.cookie.split("JSESSIONID=")[1]
+
+    const response = await axios.post(
+      `${API_BASE_URL}/air/repriceV1`,
+      {
+        Data: {
+          SearchFormData,
+          AirOriginDestinationOptions,
+        },
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Cookie: `JSESSIONID=${sessionId}`,
+        },
+      },
+    )
+
+    res.json(response.data)
+  } catch (error) {
+    console.error("Air reprice error:", error.response?.data || error.message)
+    res.status(error.response?.status || 500).json({
+      Status: "Failed",
+      Description: error.response?.data?.Description || "Air reprice failed",
+      StatusCode: error.response?.status || 500,
+    })
+  }
+})
+
+app.post("/api/air/book", async (req, res) => {
+  try {
+    const { SearchFormData, CartData, CartBookingId, Passengers, DeliveryInfo, MetaInfos, PaymentMethod } = req.body
+    const sessionId = req.headers.cookie.split("JSESSIONID=")[1]
+
+    const response = await axios.post(
+      `${API_BASE_URL}/air/bookV1`,
+      {
+        Data: {
+          SearchFormData,
+          CartData,
+          CartBookingId,
+          Passengers,
+          DeliveryInfo,
+          MetaInfos,
+          PaymentMethod,
+        },
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Cookie: `JSESSIONID=${sessionId}`,
+        },
+      },
+    )
+
+    res.json(response.data)
+  } catch (error) {
+    console.error("Air booking error:", error.response?.data || error.message)
+    res.status(error.response?.status || 500).json({
+      Status: "Failed",
+      Description: error.response?.data?.Description || "Air booking failed",
+      StatusCode: error.response?.status || 500,
+    })
+  }
+})
+
+const PORT = process.env.PORT || 5000
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+

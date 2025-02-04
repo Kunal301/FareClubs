@@ -4,6 +4,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import "./index.css";
 import "./globals.css";
 import Apps from './Apps';
+
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
@@ -11,7 +12,8 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <Router>
-        <Apps />
+      <Apps />
     </Router>
   </React.StrictMode>
 );
+
