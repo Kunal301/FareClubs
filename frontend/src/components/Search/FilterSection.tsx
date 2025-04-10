@@ -43,7 +43,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-medium text-gray-900">PRICE</h3>
-            <button onClick={onReset} className="text-sm text-blue-600 hover:text-blue-700">
+            <button onClick={onReset} className="text-sm text-[#007aff] hover:text-[#007aff]">
               Reset
             </button>
           </div>
@@ -58,7 +58,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
               max={maxPrice}
               value={priceRange[1]}
               onChange={(e) => onPriceRangeChange([minPrice, Number(e.target.value)])}
-              className="w-full accent-blue-600"
+              className="w-full accent-[#007aff]"
             />
           </div>
         </div>
@@ -72,7 +72,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
                   type="checkbox"
                   checked={selectedStops.includes(stops)}
                   onChange={() => onStopsChange(stops)}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-[#007aff] border-gray-300 rounded focus:ring-[#007aff]"
                 />
                 <span className="ml-2 text-sm text-gray-600">
                   {stops === 0 ? "Non-stop" : `${stops} ${stops === 1 ? "stop" : "stops"}`}
@@ -90,8 +90,8 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
                 key={time}
                 className={`p-2 text-xs text-center border rounded-md ${
                   selectedDepartureTimes.includes(time)
-                    ? "border-blue-600 text-blue-600 bg-blue-50"
-                    : "border-gray-300 hover:border-blue-600 hover:text-blue-600"
+                    ? "border-[#ffffff] text-[#ffffff] bg-[#eb0066]"
+                    : "border-gray-300 hover:border-[#007aff] hover:text-[#007aff]"
                 }`}
                 onClick={() => onDepartureTimeChange(time)}
               >
@@ -111,7 +111,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
                     type="checkbox"
                     checked={selectedAirlines.includes(name)}
                     onChange={() => onAirlinesChange(name)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-[#007aff] border-gray-300 rounded focus:ring-[#007aff]"
                   />
                   <span className="ml-2 text-sm text-gray-600">{name}</span>
                 </div>

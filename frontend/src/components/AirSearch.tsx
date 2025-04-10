@@ -168,7 +168,7 @@ const AirSearch: React.FC<AirSearchProps> = ({ sessionId }) => {
                 name="DepartureAirport"
               />
             </div>
-            <ArrowLeftRight className="text-white" />
+           
             <div className="flex-1">
               <input
                 type="text"
@@ -316,7 +316,7 @@ const AirSearch: React.FC<AirSearchProps> = ({ sessionId }) => {
                     </button>
                     <button
                       className={`${
-                        activeTab === 'fareSummary' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'
+                        activeTab === 'fareSummary' ? ' border-b-2' : 'text-gray-500'
                       } pb-2`}
                       onClick={() => setActiveTab('fareSummary')}
                     >

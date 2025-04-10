@@ -16,7 +16,7 @@ export const SortingTabs: React.FC<SortingTabsProps> = ({ activeTab, onSort }) =
             key={tab}
             className={`px-6 py-3 text-sm ${
               activeTab === tab
-                ? "text-blue-600 font-medium relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-600"
+                ? "text-[#007aff] font-medium relative after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#007aff]"
                 : "text-gray-600"
             }`}
             onClick={() => onSort(tab)}
