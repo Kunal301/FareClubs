@@ -1,0 +1,145 @@
+uthenticate
+Authenticate method will return the Token ID that needs to be echoed back in every subsequent request. In case of session expiry or log outs, the authenticate method needs to be called again and the updated Token ID needs to be passed in every subsequent request.
+
+Password will be change by API team in Test Environment and in Live API,Mr.Gaurav Khanna/Ms Pavneet Kaur will do the same.
+
+Points To Remember for Token ID:
+
+Generate single token in a day as it is valid for 24 hours (00:00 AM to 11:59 PM), so generate a token at 12:03 AM and it can be used up to 11:58       PM same day.
+At 12:00 AM, if the token value is being used of previous day in any ongoing booking, do not worry it can be used until booking is completed.
+After 12:02 AM no booking can be started with previous day’s token value.
+Do not generate token id with every search.
+
+Service URL (REST) to be used:
+http://Sharedapi.tektravels.com/SharedData.svc/rest/Authenticate
+
+Authenticate Request
+Level	Element	Format	Comments	Mandatory/ Optional
+1	ClientId	String	Client ID – ApiIntegrationNew	Mandatory
+2	UserName	String	User name provided to the agency at registration	Mandatory
+3	Password	String	Password provided to the agency at registration(Use API Password)	Mandatory
+4	EndUserIp	String	Public Server IP	Mandatory
+
+Authenticate Response
+Level
+Element
+Format
+Comments
+Mandatory/ Optional
+1
+Member
+1.1
+FirstName
+String
+First Name of the client
+Mandatory
+1.2
+LastName
+String
+Last Name of the client
+Mandatory
+1.3
+Email
+String
+Email ID of the client
+Mandatory
+1.4
+MemberId
+Integer
+Unique Member ID of the
+Mandatory
+1.5
+AgencyId
+Integer
+Unique Agency ID of the
+Mandatory
+1.6
+LoginName
+String
+Login Name (user name) of
+Mandatory
+1.7
+LoginDetails
+String
+Login Details of the client
+Mandatory
+2
+TokenId
+String
+Token ID
+Mandatory (Token Id to be echoed back in further requests valid for 24 hrs i.e 00:00 AM to 11:59 PM)
+3
+Status
+Integer
+Response status
+Mandatory
+NotSet = 0, Successful = 1, Failed = 2, InCorrectUserName = 3, InCorrectPassword = 4, PasswordExpired = 5
+4
+Error
+Mandatory
+4.1
+ErrorCode
+Integer
+Code corresponding to the Error
+Mandatory
+4.2
+ErrorMessage
+String
+Contains error message
+Mandatory
+(Will contain error description corresponding to ErrorCode. Error Message would be blank in case ErrorCode=0)
+
+
+Sample JSON
+
+
+Authenticate Request
+{
+"ClientId": "ApiIntegrationNew",
+"UserName": "xxxxxx",
+"Password": "xxxxxx@12", 
+"EndUserIp": "192.168.11.120"
+}
+Authenticate Response
+{
+"Status": 1,
+"TokenId": "705d0324-56eb-48a0-9e8e-bd6ed9f853d5",
+"Error": {
+"ErrorCode": 0,
+"ErrorMessage": ""
+},
+"Member": {
+"FirstName": "Xxxxx",
+"LastName": "Yyyyyy",
+"Email": "zaassssss@gmail.com",
+"MemberId": 111,
+"AgencyId": 222,
+"LoginName": "username",
+"LoginDetails": "Login Success at#@ 8/14/2013 6:17:22 PM #@ IPAddress: 122.172.106.185",
+"isPrimaryAgent": false
+}
+}
+
+
+
+Authentication FAQ
+
+
+Authenticate FAQ
+Q1. What is the Error means - You are not authorized to access TBO-API
+
+Solution:This error occurs when we are getting hit from non-whitelisted IP. For this you have to connect with your service domain Partner and if you want to whitelist the IP It needs to be whitelisted from Ms. Pavneet Kaur end's Also, this error comes in case where the client is sending request for live but using staging's URL.
+
+Q2. How to call Authenticate method
+
+Solution:Authenticate method will return the Token ID that needs to be echoed back in every subsequent request. In case of session expiry or log outs, the authenticate method needs to be called again and the updated Token ID needs to be passed in every subsequent request.Only 1 token should be generated for all transactions.
+
+Parameters
+
+ClientId
+UserName
+Password
+EndUserIp
+Q3.Token id validation
+
+Solution:You need to generate only 1 token id in a single day as it is valid from "00:00:00 AM" till "11:59:59 PM" and same can be used for any APIâ€™s and on any server.

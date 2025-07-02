@@ -1,0 +1,543 @@
+/* Airplane and seat map styling */
+.seat-map-container {
+  position: relative;
+  background-color: #b3d4fc;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 70vh;
+}
+
+.seat-map {
+  position: relative;
+  background-color: #b3d4fc;
+  overflow-y: auto;
+  height: 100%;
+  padding: 0;
+}
+
+/* Header */
+.seat-map-header {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 10;
+  padding: 12px 16px;
+}
+
+.airplane-body {
+  position: relative;
+  background-color: white;
+  margin: 0 auto;
+  width: 90%;
+  max-width: 600px;
+  min-height: 1500px;
+  border-top-left-radius: 50% 40%;
+  border-top-right-radius: 50% 40%;
+}
+
+/* Cockpit windows */
+.cockpit-area {
+  position: absolute;
+  top: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 100px;
+}
+
+.cockpit-window {
+  position: absolute;
+  background-color: #333;
+  border-radius: 2px;
+}
+
+/* Left side windows */
+.window-left-1 {
+  top: 10px;
+  left: 15%;
+  width: 10%;
+  height: 25px;
+  transform: rotate(-15deg);
+  border-radius: 0 0 5px 5px;
+}
+
+.window-left-2 {
+  top: 40px;
+  left: 25%;
+  width: 15%;
+  height: 30px;
+}
+
+.window-left-3 {
+  top: 75px;
+  left: 35%;
+  width: 10%;
+  height: 25px;
+  border-radius: 0 0 5px 5px;
+}
+
+/* Right side windows */
+.window-right-1 {
+  top: 10px;
+  right: 15%;
+  width: 10%;
+  height: 25px;
+  transform: rotate(15deg);
+  border-radius: 0 0 5px 5px;
+}
+
+.window-right-2 {
+  top: 40px;
+  right: 25%;
+  width: 15%;
+  height: 30px;
+}
+
+.window-right-3 {
+  top: 75px;
+  right: 35%;
+  width: 10%;
+  height: 25px;
+  border-radius: 0 0 5px 5px;
+}
+
+/* Cabin divider line */
+.cabin-divider {
+  position: absolute;
+  top: 220px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 1px;
+  background-color: #f3f4f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Toilet icons */
+.toilet-container {
+  position: absolute;
+  top: 250px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 10%;
+}
+
+.toilet-icon {
+  width: 44px;
+  height: 44px;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Exit signs */
+.exit-container {
+  position: absolute;
+  top: 320px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 5%;
+}
+
+.exit-sign {
+  display: flex;
+  align-items: center;
+  color: #e63946;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.exit-sign-left {
+  margin-left: 10px;
+}
+
+.exit-sign-right {
+  margin-right: 10px;
+}
+
+/* Seat grid */
+.seat-grid {
+  position: relative;
+  padding: 20px;
+  margin-top: 350px;
+}
+
+.column-headers {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto 16px auto;
+}
+
+.column-header {
+  text-align: center;
+  font-weight: 500;
+  font-size: 18px;
+}
+
+.seat-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.row-number {
+  width: 30px;
+  text-align: center;
+  font-weight: 500;
+  font-size: 18px;
+}
+
+.seats-container {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.seat {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  position: relative;
+  margin: 0 auto;
+  border: 1px solid #d1d5db;
+  background-color: white;
+}
+
+.seat.unavailable::after {
+  content: "×";
+  position: absolute;
+  font-size: 28px;
+  color: #9ca3af;
+}
+
+.seat.free {
+  background-color: #a7f3d0;
+  border: 1px solid #6ee7b7;
+}
+
+.seat.low-price {
+  background-color: #93c5fd;
+  border: 1px solid #60a5fa;
+}
+
+.seat.medium-price {
+  background-color: #e9d5ff;
+  border: 1px solid #c4b5fd;
+}
+
+.seat.exit-row {
+  position: relative;
+}
+
+.seat.exit-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 10px 10px 0 0;
+  border-color: #e63946 transparent transparent transparent;
+}
+
+.seat.selected {
+  background-color: #3b82f6;
+  border: 1px solid #2563eb;
+  color: white;
+}
+
+.seat.xl-seat {
+  background-color: #ef4444;
+  border: 1px solid #dc2626;
+  color: white;
+  font-weight: bold;
+}
+
+/* Seat legend */
+.seat-legend {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background-color: white;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.legend-color {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  margin-right: 8px;
+}
+
+/* Wings */
+.airplane-wing-left,
+.airplane-wing-right {
+  position: absolute;
+  bottom: 30%;
+  width: 120px;
+  height: 300px;
+  background-color: #e63946;
+  z-index: 1;
+}
+
+.airplane-wing-left {
+  left: -80px;
+  clip-path: polygon(100% 0%, 100% 100%, 0% 100%, 30% 0%);
+}
+
+.airplane-wing-right {
+  right: -80px;
+  clip-path: polygon(0% 0%, 0% 100%, 100% 100%, 70% 0%);
+}
+
+/* Tail */
+.airplane-tail {
+  position: absolute;
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 150px;
+  background-color: #aaa;
+}
+
+/* MakeMyTrip style seat map CSS */
+.flightWrap {
+  position: relative;
+  width: 100%;
+  background-color: #b3d4fc;
+  padding: 20px 0;
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+/* .iconflFront,
+.iconflTail {
+  display: block;
+  width: 100%;
+  height: 50px;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin: 10px 0;
+} */
+
+.iconflFront {
+  background-size: contain;
+  margin-bottom: 0;
+}
+
+.iconflTail {
+  background-size: contain;
+  margin-top: 0;
+}
+
+.flightSeatMatrix {
+  background-color: white;
+  width: 90%;
+  max-width: 600px;
+  margin: 0 auto;
+  border-radius: 50% 50% 0 0 / 20% 20% 0 0;
+  padding: 20px 0;
+  position: relative;
+}
+
+.seatRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.seatCol {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2.8px;
+}
+
+.seatLabel {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.seatEmptyLabel {
+  width: 30px;
+  height: 30px;
+}
+
+.emptyCell {
+  width: 30px;
+  height: 30px;
+}
+
+.seatBlock {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 14px;
+  position: relative;
+}
+
+/* Add these styles for the tooltip functionality */
+.seat-tooltip {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 100;
+  pointer-events: none;
+  white-space: nowrap;
+  transform: translateY(-100%);
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.seatBlock:hover .seat-tooltip {
+  opacity: 1;
+}
+
+/* Add a hover effect for available seats */
+.seatBlock.pointer:hover {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.seatNotAvailable {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.seatNotAvailable img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.relative {
+  position: relative;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.lavatoryWrap,
+.galleyWrap {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #e5e7eb;
+  border-radius: 4px;
+}
+
+.lavatoryWrap img,
+.galleyWrap img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.exitIcon {
+  display: flex;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.exitIcon.left {
+  justify-content: flex-start;
+}
+
+.exitIcon.right {
+  justify-content: flex-end;
+}
+
+.exit-icon {
+  color: #e63946;
+  font-weight: bold;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.exit-left::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 6px solid #e63946;
+  margin-right: 4px;
+}
+
+.exit-right::after {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 6px solid #e63946;
+  margin-left: 4px;
+}
+
+.noReclineExitSeat {
+  position: relative;
+}
+
+.noReclineExitSeat::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px 8px 0 0;
+  border-color: #e63946 transparent transparent transparent;
+}

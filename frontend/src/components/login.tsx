@@ -15,26 +15,26 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [isLoading, setIsLoading] = useState(false)
 
   // Check if we already have a valid token
-  useEffect(() => {
-    const storedToken = localStorage.getItem("tokenId")
-    const tokenTimestamp = localStorage.getItem("tokenTimestamp")
+  // useEffect(() => {
+  //   const storedToken = localStorage.getItem("tokenId")
+  //   const tokenTimestamp = localStorage.getItem("tokenTimestamp")
 
-    if (storedToken && tokenTimestamp) {
-      const tokenDate = new Date(Number.parseInt(tokenTimestamp))
-      const currentDate = new Date()
+  //   if (storedToken && tokenTimestamp) {
+  //     const tokenDate = new Date(Number.parseInt(tokenTimestamp))
+  //     const currentDate = new Date()
 
-      // Check if token is from today (same day)
-      if (
-        tokenDate.getDate() === currentDate.getDate() &&
-        tokenDate.getMonth() === currentDate.getMonth() &&
-        tokenDate.getFullYear() === currentDate.getFullYear()
-      ) {
-        // Token is still valid, we can use it
-        const memberInfo = JSON.parse(localStorage.getItem("memberInfo") || "{}")
-        onLoginSuccess(storedToken, memberInfo)
-      }
-    }
-  }, [onLoginSuccess])
+  //     // Check if token is from today (same day)
+  //     if (
+  //       tokenDate.getDate() === currentDate.getDate() &&
+  //       tokenDate.getMonth() === currentDate.getMonth() &&
+  //       tokenDate.getFullYear() === currentDate.getFullYear()
+  //     ) {
+  //       // Token is still valid, we can use it
+  //       const memberInfo = JSON.parse(localStorage.getItem("memberInfo") || "{}")
+  //       onLoginSuccess(storedToken, memberInfo)
+  //     }
+  //   }
+  // }, [onLoginSuccess])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

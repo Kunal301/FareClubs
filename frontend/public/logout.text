@@ -1,0 +1,40 @@
+Logout METHOD STRUCTURE
+
+Logout method can be used to kill any existing token (session), forecefully. Once the session is killed, the authenticate method needs to be called again and the updated Token ID needs to be passed in every subsequent request.
+Service URL (REST) to be used:
+http://Sharedapi.tektravels.com/SharedData.svc/rest/Logout
+Logout Request
+Level	Element	Format	Comments	Mandatory/ Optional
+1	ClientId	String	Client ID – ApiIntegrationNew	Mandatory
+2	TokenAgencyId	String	Agency ID(Provided in Authenticate response)	Mandatory
+3	TokenMemberId	String	Member ID(Provided in Authenticate response)	Mandatory
+4	EndUserIp	String	IP address of the End User	Mandatory
+5	TokenId	String	Token ID	Mandatory(Token Id received in authenticate response)
+Logout Response
+Level	Element	Format	Comments	Mandatory/ Optional
+1	Status	Enumeration	Status	Mandatory
+NotSet = 0, Successful = 1, Failed = 2
+2	Error			Mandatory
+2.1	ErrorCode	Integer	Code corresponding to the Error	Mandatory
+2.2	ErrorMessage	String	Contains error message	Mandatory(Will contain error description corresponding to ErrorCode. Error Message would be blank in case ErrorCode=0)
+
+
+sampleJSON
+
+
+Logout Request
+{
+"ClientId": "ApiIntegrationNew",
+"EndUserIp": "192.168.11.120",
+"TokenAgencyId": 8428,
+"TokenMemberId": 9611,
+"TokenId": "b4d01ea0-6e4d-481b-aff1-ab7983064082"
+}
+LogOut Response
+{
+"Error": {
+"ErrorCode": 0,
+"ErrorMessage": ""
+},
+"Status": 1
+}

@@ -1,16 +1,16 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowLeftRight, Calendar, Filter } from "lucide-react"
-import { format, addDays, parse, isValid } from "date-fns"
+import { format, addDays, parse, isValid } from "date-fns" // Ensure isValid is imported
 import "air-datepicker/air-datepicker.css"
 import { CustomDropdown } from "../ui/CustomDropdown"
 import { useDatePicker } from "../../hooks/useDatePicker"
 import { getTodayStart } from "../../utils/dateUtils"
-// Import the validation functions
 import { validateMultiCityDates, checkConnectingCities } from "../../utils/ValidateMultiCity"
+import AirportAutocomplete from "../ui/AirportAutocomplete"
 
 interface SearchProps {
   sessionId: string
@@ -23,86 +23,68 @@ interface CityPair {
 }
 
 const Search: React.FC<SearchProps> = ({ sessionId }) => {
-  useEffect(() => {
-    // Clear any existing search parameters when dashboard mounts
-    localStorage.removeItem("searchParams")
-  }, [])
-
   const navigate = useNavigate()
 
-  // Initialize with today's date and tomorrow for return
   const today = new Date()
   const tomorrow = addDays(today, 1)
 
+  // Define initial formatted dates
+  const initialDateFormatted = format(today, "yyyy-MM-dd")
+  const initialReturnDateFormatted = format(tomorrow, "yyyy-MM-dd")
+
   const [searchParams, setSearchParams] = useState({
-    tripType: "one-way", // one-way, round-trip, multi-city
+    tripType: "one-way",
     from: "",
     to: "",
-    date: format(today, "yyyy-MM-dd"),
-    returnDate: format(tomorrow, "yyyy-MM-dd"), // Default return date is tomorrow
+    date: initialDateFormatted, // Use the pre-formatted date
+    returnDate: initialReturnDateFormatted, // Use the pre-formatted date
     passengers: 1,
-    fareType: "regular", // regular, student, armed-forces, senior-citizen
-    preferredAirlines: [] as string[], // For airline filtering
+    fareType: "regular",
+    preferredAirlines: [] as string[],
     directFlight: false,
-    multiCityTrips: [] as CityPair[], // For multi-city
+    multiCityTrips: [] as CityPair[],
   })
 
-  const [tripType, setTripType] = useState("one-way")
-  const [departureDate, setDepartureDate] = useState<Date | null>(today)
-  const [returnDate, setReturnDate] = useState<string>(format(tomorrow, "yyyy-MM-dd"))
-  const [showFilters, setShowFilters] = useState(false)
-
-  const [passengerType, setPassengerType] = useState("regular")
-  const [nonStop, setNonStop] = useState(false)
-  const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth > 1024)
-  const departureRef = useRef<HTMLInputElement | null>(null)
-  const returnRef = useRef<HTMLInputElement | null>(null)
-  const [departureDay, setDepartureDay] = useState<string>(format(today, "EEEE"))
-  const [returnDay, setReturnDay] = useState<string>(format(tomorrow, "EEEE"))
-  const [adults, setAdults] = useState<number>(1)
-  const [children, setChildren] = useState<number>(0)
-  const [infants, setInfants] = useState<number>(0)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string>("")
-  const [selectedAirlines, setSelectedAirlines] = useState<string[]>([])
-  // Add a state for validation errors
-  const [validationError, setValidationError] = useState<string>("")
-  const [validationWarning, setValidationWarning] = useState<string>("")
+  // Ensure initial derived states are robust against invalid dates
+  const [departureDay, setDepartureDay] = useState<string>(
+    isValid(new Date(searchParams.date)) ? format(new Date(searchParams.date), "EEEE") : "",
+  )
+  const [returnDay, setReturnDay] = useState<string>(
+    isValid(new Date(searchParams.returnDate)) ? format(new Date(searchParams.returnDate), "EEEE") : "",
+  )
 
   useEffect(() => {
-    // Initialize with today's date and tomorrow for return
-    const today = new Date()
-    const tomorrow = addDays(today, 1)
-
-    setSearchParams((prev) => ({
-      ...prev,
-      date: format(today, "yyyy-MM-dd"),
-      returnDate: format(tomorrow, "yyyy-MM-dd"),
-    }))
-
-    setDepartureDate(today)
-    setDepartureDay(format(today, "EEEE"))
-    setReturnDay(format(tomorrow, "EEEE"))
+    localStorage.removeItem("searchParams")
   }, [])
 
+  // Update derived day states when date changes
   useEffect(() => {
-    const handleResize = () => setIsLargeScreen(window.innerWidth > 1024)
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
+    try {
+      const depDate = new Date(searchParams.date)
+      if (searchParams.date && isValid(depDate)) {
+        setDepartureDay(format(depDate, "EEEE"))
+      } else {
+        setDepartureDay("")
+      }
+
+      const retDate = new Date(searchParams.returnDate)
+      if (searchParams.returnDate && searchParams.tripType === "round-trip" && isValid(retDate)) {
+        setReturnDay(format(retDate, "EEEE"))
+      } else {
+        setReturnDay("")
+      }
+    } catch (e) {
+      console.error("Error updating derived date states:", e)
+      setDepartureDay("")
+      setReturnDay("")
+    }
+  }, [searchParams.date, searchParams.returnDate, searchParams.tripType])
 
   const tripOptions = [
     { label: "One Way", value: "one-way" },
     { label: "Round Trip", value: "round-trip" },
     { label: "Multi City", value: "multi-city" },
   ]
-
-  const focusReturnDate = () => {
-    const returnInput = document.querySelector("[name='return']")
-    if (returnInput) {
-      ;(returnInput as HTMLElement).focus()
-    }
-  }
 
   const fareTypeOptions = [
     { label: "Regular", value: "regular" },
@@ -121,7 +103,6 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
     { label: "Air India Express", value: "IX" },
   ]
 
-  // Passenger options for dropdown
   const passengerOptions = [
     { value: 1, label: "1 Passenger" },
     { value: 2, label: "2 Passengers" },
@@ -134,33 +115,27 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
     { value: 9, label: "9 Passengers" },
   ]
 
-  // Replace the existing date picker initialization with our custom hook
   const { inputRef: departureInputRef } = useDatePicker({
     onSelect: (date) => {
       if (date) {
         const formattedDate = format(date, "yyyy-MM-dd")
         setSearchParams((prev) => ({ ...prev, date: formattedDate }))
-        setDepartureDay(format(date, "EEEE"))
-        setDepartureDate(date)
-
-        // If return date is earlier than departure date, update it
-        if (searchParams.returnDate) {
-          const returnDate = new Date(searchParams.returnDate)
-          if (returnDate < date) {
-            const newReturnDate = format(addDays(date, 1), "yyyy-MM-dd")
-            setSearchParams((prev) => ({ ...prev, returnDate: newReturnDate }))
-            setReturnDay(format(addDays(date, 1), "EEEE"))
-            setReturnDate(newReturnDate)
+        setSearchParams((prev) => {
+          if (prev.returnDate) {
+            const returnDateObj = new Date(prev.returnDate)
+            if (returnDateObj < date) {
+              const newReturnDate = format(addDays(date, 1), "yyyy-MM-dd")
+              return { ...prev, returnDate: newReturnDate }
+            }
           }
-        }
+          return prev
+        })
       } else {
         setSearchParams((prev) => ({ ...prev, date: "" }))
-        setDepartureDay("")
-        setDepartureDate(null)
       }
     },
-    minDate: getTodayStart(), // Use the utility function
-    maxDate: false, // Explicitly set to false
+    minDate: getTodayStart(),
+    maxDate: false,
   })
 
   const { inputRef: returnInputRef } = useDatePicker({
@@ -168,51 +143,46 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
       if (date) {
         const formattedDate = format(date, "yyyy-MM-dd")
         setSearchParams((prev) => ({ ...prev, returnDate: formattedDate }))
-        setReturnDay(format(date, "EEEE"))
-        setReturnDate(formattedDate)
       } else {
         setSearchParams((prev) => ({ ...prev, returnDate: "" }))
-        setReturnDay("")
-        setReturnDate("")
       }
     },
-    minDate: searchParams.date ? new Date(searchParams.date) : getTodayStart(), // Ensure return date is after departure
-    maxDate: false, // Explicitly set to false
-    autoClose: true, // Close the datepicker after selection
+    // FIX: Ensure minDate is always a valid Date object or false
+    minDate: searchParams.date && isValid(new Date(searchParams.date)) ? new Date(searchParams.date) : getTodayStart(), // Fallback to today's start if searchParams.date is invalid
+    maxDate: false,
+    autoClose: true,
   })
 
   const handlePassengerChange = (value: number | string) => {
-    setSearchParams({
-      ...searchParams,
+    setSearchParams((prev) => ({
+      ...prev,
       passengers: Number(value),
-    })
-    setAdults(Number(value))
+    }))
   }
 
   const handleTripTypeChange = (type: string) => {
     setSearchParams((prev) => {
-      // If switching to round-trip and no return date is set, set a default return date (next day)
       let returnDate = prev.returnDate
       if (type === "round-trip" && (!prev.returnDate || prev.returnDate.trim() === "")) {
-        // Set return date to the next day after departure date, or current date + 1 if no departure date
         if (prev.date && prev.date.trim() !== "") {
           const departureDate = new Date(prev.date)
           returnDate = format(addDays(departureDate, 1), "yyyy-MM-dd")
         } else {
           returnDate = format(addDays(new Date(), 1), "yyyy-MM-dd")
         }
-        // Also update the return day display
-        setReturnDay(format(new Date(returnDate), "EEEE"))
-        setReturnDate(returnDate)
+      }
+
+      let initialMultiCityDate = prev.date
+      if (!initialMultiCityDate || initialMultiCityDate.trim() === "") {
+        initialMultiCityDate = format(new Date(), "yyyy-MM-dd")
       }
 
       return {
         ...prev,
         tripType: type,
         returnDate: type === "round-trip" ? returnDate : "",
-        // Initialize multi-city trips when switching to multi-city
         multiCityTrips:
-          type === "multi-city" ? [{ from: prev.from || "", to: prev.to || "", date: prev.date || "" }] : [],
+          type === "multi-city" ? [{ from: prev.from || "", to: prev.to || "", date: initialMultiCityDate }] : [],
       }
     })
   }
@@ -225,22 +195,19 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
   }
 
   const handleAirlineChange = (airline: string) => {
-    setSelectedAirlines((prev) => {
+    setSearchParams((prev) => {
+      let updatedAirlines = [...prev.preferredAirlines]
       if (airline === "") {
-        return [] // Clear all selections if "All Airlines" is selected
-      }
-
-      if (prev.includes(airline)) {
-        return prev.filter((a) => a !== airline)
+        updatedAirlines = []
       } else {
-        return [...prev, airline]
+        if (updatedAirlines.includes(airline)) {
+          updatedAirlines = updatedAirlines.filter((a) => a !== airline)
+        } else {
+          updatedAirlines.push(airline)
+        }
       }
+      return { ...prev, preferredAirlines: updatedAirlines }
     })
-
-    setSearchParams((prev) => ({
-      ...prev,
-      preferredAirlines: selectedAirlines,
-    }))
   }
 
   const handleMultiCityChange = (index: number, field: keyof CityPair, value: string) => {
@@ -258,8 +225,8 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
     setSearchParams((prev) => {
       const updatedTrips = [...(prev.multiCityTrips || [])]
       if (updatedTrips.length < 5) {
-        // Limit to 5 trips
-        updatedTrips.push({ from: "", to: "", date: "" })
+        const newSegmentDate = format(new Date(), "yyyy-MM-dd")
+        updatedTrips.push({ from: "", to: "", date: newSegmentDate })
       }
       return { ...prev, multiCityTrips: updatedTrips }
     })
@@ -283,120 +250,112 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
     }))
   }
 
-  // Format date for the API (yyyy-MM-ddTHH:mm:ss)
   const formatDateForApi = (dateStr: string) => {
     try {
       if (!dateStr || dateStr.trim() === "") {
         console.error("Empty date string provided to formatDateForApi")
-        return new Date().toISOString().split("T")[0] + "T00:00:00" // Use current date as fallback
+        return new Date().toISOString().split("T")[0] + "T00:00:00"
       }
-
-      // Check if the date is already in ISO format
       if (dateStr.includes("T")) {
-        return dateStr // Already in correct format
+        return dateStr
       }
-
       const date = parse(dateStr, "yyyy-MM-dd", new Date())
       if (!isValid(date)) {
         console.error("Invalid date parsed:", dateStr)
-        return new Date().toISOString().split("T")[0] + "T00:00:00" // Use current date as fallback
+        return new Date().toISOString().split("T")[0] + "T00:00:00"
       }
-
       return format(date, "yyyy-MM-dd'T'HH:mm:ss")
     } catch (error) {
       console.error("Error formatting date:", error, "for date string:", dateStr)
-      // Return a valid date format as fallback
       return new Date().toISOString().split("T")[0] + "T00:00:00"
     }
   }
 
-  // Update the handleSearch function to use our backend proxy
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [validationError, setValidationError] = useState("")
+  const [validationWarning, setValidationWarning] = useState("")
+  const [showFilters, setShowFilters] = useState(false)
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError("")
     setValidationError("")
     setValidationWarning("")
-  
-    // ✅ Validate required fields for one-way & round-trip
+
     if (searchParams.tripType !== "multi-city") {
       if (!searchParams.from || !searchParams.to) {
         setError("Please select origin and destination cities")
         setIsLoading(false)
         return
       }
-  
-      if (!searchParams.date || searchParams.date.trim() === "" || !departureInputRef.current?.value) {
+      if (!searchParams.date || searchParams.date.trim() === "") {
         setError("Please select a departure date")
         setIsLoading(false)
         return
       }
-  
       if (
         searchParams.tripType === "round-trip" &&
-        (!searchParams.returnDate || searchParams.returnDate.trim() === "" || !returnInputRef.current?.value)
+        (!searchParams.returnDate || searchParams.returnDate.trim() === "")
       ) {
         setError("Please select a return date")
         setIsLoading(false)
         return
       }
     }
-  
-    // ✅ Validate multi-city segments
+
     if (searchParams.tripType === "multi-city" && searchParams.multiCityTrips) {
       if (!searchParams.multiCityTrips.length) {
         setError("Please add at least one segment for multi-city search")
         setIsLoading(false)
         return
       }
-  
+
       let allFieldsValid = true
       let specificError = ""
-  
+
       for (let i = 0; i < searchParams.multiCityTrips.length; i++) {
         const trip = searchParams.multiCityTrips[i]
         if (!trip) continue
-  
+
         if (!trip.from || trip.from.trim() === "") {
           specificError = `Please select origin city for segment ${i + 1}`
           allFieldsValid = false
           break
         }
-  
         if (!trip.to || trip.to.trim() === "") {
           specificError = `Please select destination city for segment ${i + 1}`
           allFieldsValid = false
           break
         }
-  
         if (!trip.date || trip.date.trim() === "") {
           specificError = `Please select date for segment ${i + 1}`
           allFieldsValid = false
           break
         }
       }
-  
+
       if (!allFieldsValid) {
         setError(specificError)
         setIsLoading(false)
         return
       }
-  
+
       const dateValidation = validateMultiCityDates(searchParams.multiCityTrips)
       if (!dateValidation.isValid) {
         setValidationError(dateValidation.errorMessage)
         setIsLoading(false)
         return
       }
-  
+
       const cityCheck = checkConnectingCities(searchParams.multiCityTrips)
       if (!cityCheck.isConnected) {
         setValidationWarning(cityCheck.warningMessage)
       }
-  
       setError("")
     }
-  
+
     try {
       const tokenId = localStorage.getItem("tokenId")
       if (!tokenId) {
@@ -404,11 +363,11 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
         setIsLoading(false)
         return
       }
-  
+
       let journeyType = "1"
       if (searchParams.tripType === "round-trip") journeyType = "2"
       else if (searchParams.tripType === "multi-city") journeyType = "3"
-  
+
       let resultFareType = null
       switch (searchParams.fareType) {
         case "regular":
@@ -424,12 +383,12 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
           resultFareType = "5"
           break
       }
-  
-      const gdsAirlines = selectedAirlines.filter((code) => ["AI", "UK"].includes(code))
-      const lccAirlines = selectedAirlines.filter((code) => ["6E", "SG", "QP", "IX"].includes(code))
+
+      const gdsAirlines = searchParams.preferredAirlines.filter((code) => ["AI", "UK"].includes(code))
+      const lccAirlines = searchParams.preferredAirlines.filter((code) => ["6E", "SG", "QP", "IX"].includes(code))
       let sources = null
       let preferredAirlines = null
-  
+
       if (gdsAirlines.length > 0 && lccAirlines.length === 0) {
         sources = ["GDS"]
         preferredAirlines = gdsAirlines
@@ -439,87 +398,19 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
         sources = ["GDS", ...lccAirlines]
         preferredAirlines = gdsAirlines
       }
-  
-      const cityToAirportCode: Record<string, string> = {
-        DELHI: "DEL",
-        "NEW DELHI": "DEL",
-        MUMBAI: "BOM",
-        BANGALORE: "BLR",
-        CHENNAI: "MAA",
-        KOLKATA: "CCU",
-        HYDERABAD: "HYD",
-        JAIPUR: "JAI",
-      }
-  
-      const fromCode = cityToAirportCode[searchParams.from.toUpperCase()] || searchParams.from
-      const toCode = cityToAirportCode[searchParams.to.toUpperCase()] || searchParams.to
-  
+
       let finalReturnDate = searchParams.returnDate
       if (searchParams.tripType === "round-trip" && (!finalReturnDate || finalReturnDate.trim() === "")) {
         if (searchParams.date && searchParams.date.trim() !== "") {
           const departureDate = new Date(searchParams.date)
           finalReturnDate = format(addDays(departureDate, 1), "yyyy-MM-dd")
-          console.log("Setting default return date:", finalReturnDate)
         }
       }
-  
-      let segments: {
-        Origin: string
-        Destination: string
-        FlightCabinClass: string
-        PreferredDepartureTime: string
-        PreferredArrivalTime: string
-      }[] = []
-  
-      if (searchParams.tripType === "one-way") {
-        segments = [
-          {
-            Origin: fromCode,
-            Destination: toCode,
-            FlightCabinClass: "1",
-            PreferredDepartureTime: formatDateForApi(searchParams.date),
-            PreferredArrivalTime: formatDateForApi(searchParams.date),
-          },
-        ]
-      } else if (searchParams.tripType === "round-trip") {
-        segments = [
-          {
-            Origin: fromCode,
-            Destination: toCode,
-            FlightCabinClass: "1",
-            PreferredDepartureTime: formatDateForApi(searchParams.date),
-            PreferredArrivalTime: formatDateForApi(searchParams.date),
-          },
-          {
-            Origin: toCode,
-            Destination: fromCode,
-            FlightCabinClass: "1",
-            PreferredDepartureTime: formatDateForApi(finalReturnDate),
-            PreferredArrivalTime: formatDateForApi(finalReturnDate),
-          },
-        ]
-      } else if (searchParams.tripType === "multi-city") {
-        segments = searchParams.multiCityTrips.map((trip) => {
-          const fromCode = cityToAirportCode[trip.from.toUpperCase()] || trip.from
-          const toCode = cityToAirportCode[trip.to.toUpperCase()] || trip.to
-  
-          return {
-            Origin: fromCode,
-            Destination: toCode,
-            FlightCabinClass: "1",
-            PreferredDepartureTime: formatDateForApi(trip.date),
-            PreferredArrivalTime: formatDateForApi(trip.date),
-          }
-        })
-      }
-  
-      // Save and navigate
+
       localStorage.setItem(
         "searchParams",
         JSON.stringify({
           ...searchParams,
-          from: fromCode,
-          to: toCode,
           journeyType,
           resultFareType,
           sources,
@@ -527,18 +418,18 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
           returnDate: finalReturnDate,
         }),
       )
-  
+
       navigate("/search-results", {
         state: {
           searchParams: {
-            from: fromCode,
-            to: toCode,
+            from: searchParams.from,
+            to: searchParams.to,
             date: searchParams.date,
             returnDate: finalReturnDate,
             passengers: searchParams.passengers,
             tripType: searchParams.tripType,
             fareType: searchParams.fareType,
-            preferredAirlines: selectedAirlines,
+            preferredAirlines: searchParams.preferredAirlines,
             directFlight: searchParams.directFlight,
             multiCityTrips: searchParams.multiCityTrips,
             journeyType,
@@ -556,8 +447,6 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
       setIsLoading(false)
     }
   }
-  
-  
 
   return (
     <div className="relative">
@@ -627,7 +516,9 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
                       type="checkbox"
                       value={option.value}
                       checked={
-                        option.value === "" ? selectedAirlines.length === 0 : selectedAirlines.includes(option.value)
+                        option.value === ""
+                          ? searchParams.preferredAirlines.length === 0
+                          : searchParams.preferredAirlines.includes(option.value)
                       }
                       onChange={() => handleAirlineChange(option.value)}
                       className="w-4 h-4 accent-[#007aff]"
@@ -644,14 +535,20 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
               <div className="grid grid-cols-1 md:grid-cols-[1.5fr_0fr_1.5fr_1fr_1fr_1fr_1fr] gap-2 items-center">
                 <div className="bg-[rgba(221,223,225,0.2)] rounded-xl p-3 md:col-span-1 border-none">
                   <label className="block text-black font-semibold text-xs mb-1">From</label>
-                  <input
+                  <AirportAutocomplete
+                    value={searchParams.from || ""}
+                    onChange={(value, airport) => {
+                      setSearchParams((prev) => ({
+                        ...prev,
+                        from: airport ? airport.code : value,
+                      }))
+                    }}
+                    placeholder="From (City or Airport)"
+                    className="w-full bg-transparent p-0 text-black font-bold text-sm focus:outline-none uppercase"
                     required
                     name="from"
-                    type="text"
-                    placeholder="NEW DELHI"
-                    className="w-full bg-transparent p-0 text-black font-bold text-sm focus:outline-none uppercase"
-                    value={searchParams.from}
-                    onChange={(e) => setSearchParams({ ...searchParams, from: e.target.value })}
+                    showPopularAirports={true}
+                    country="IN"
                   />
                 </div>
 
@@ -667,14 +564,20 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
 
                 <div className="bg-[rgba(221,223,225,0.2)] rounded-xl p-3 md:col-span-1">
                   <label className="block text-black font-semibold text-xs mb-1">To</label>
-                  <input
-                    name="to"
-                    type="text"
-                    placeholder="MUMBAI"
-                    value={searchParams.to}
-                    onChange={(e) => setSearchParams({ ...searchParams, to: e.target.value })}
-                    className="w-full bg-transparent p-0 text-black font-bold text-sm focus:outline-none appearance-none border-none uppercase"
+                  <AirportAutocomplete
+                    value={searchParams.to || ""}
+                    onChange={(value, airport) => {
+                      setSearchParams((prev) => ({
+                        ...prev,
+                        to: airport ? airport.code : value,
+                      }))
+                    }}
+                    placeholder="To (City or Airport)"
+                    className="w-full bg-transparent p-0 text-black font-bold text-sm focus:outline-none uppercase"
                     required
+                    name="to"
+                    showPopularAirports={true}
+                    country="IN"
                   />
                 </div>
 
@@ -690,7 +593,6 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
                       required
                       aria-required="true"
                       onClick={() => {
-                        // If the datepicker doesn't open automatically on focus, force it open on click
                         if (departureInputRef.current) {
                           departureInputRef.current.focus()
                         }
@@ -749,24 +651,30 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
                   >
                     <div className="bg-white rounded-lg p-3">
                       <label className="block text-gray-500 text-xs mb-1">From</label>
-                      <input
-                        required
-                        type="text"
+                      <AirportAutocomplete
+                        value={trip.from || ""}
+                        onChange={(value, airport) =>
+                          handleMultiCityChange(index, "from", airport ? airport.code : value)
+                        }
                         placeholder="Origin City"
                         className="w-full bg-transparent p-0 text-black font-bold text-sm focus:outline-none uppercase"
-                        value={trip.from}
-                        onChange={(e) => handleMultiCityChange(index, "from", e.target.value)}
+                        required
+                        name={`multi-from-${index}`}
+                        country="IN"
                       />
                     </div>
                     <div className="bg-white rounded-lg p-3">
                       <label className="block text-gray-500 text-xs mb-1">To</label>
-                      <input
-                        required
-                        type="text"
+                      <AirportAutocomplete
+                        value={trip.to || ""}
+                        onChange={(value, airport) =>
+                          handleMultiCityChange(index, "to", airport ? airport.code : value)
+                        }
                         placeholder="Destination City"
                         className="w-full bg-transparent p-0 text-black font-bold text-sm focus:outline-none uppercase"
-                        value={trip.to}
-                        onChange={(e) => handleMultiCityChange(index, "to", e.target.value)}
+                        required
+                        name={`multi-to-${index}`}
+                        country="IN"
                       />
                     </div>{" "}
                     <div className="bg-white rounded-lg p-3">
@@ -778,7 +686,6 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
                         value={trip.date}
                         min={format(getTodayStart(), "yyyy-MM-dd")}
                         onChange={(e) => handleMultiCityChange(index, "date", e.target.value)}
-                        // Add these attributes to ensure proper validation
                         aria-required="true"
                         aria-invalid={!trip.date}
                       />

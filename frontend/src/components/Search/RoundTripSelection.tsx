@@ -540,8 +540,6 @@ const RoundTripSelectionView: React.FC<RoundTripSelectionViewProps> = ({
                 {searchParams.date && format(new Date(searchParams.date), "EEE, dd MMM")}
               </span>
             </h2>
-
-            
           </div>
 
           {/* Outbound Filters */}
@@ -596,8 +594,6 @@ const RoundTripSelectionView: React.FC<RoundTripSelectionViewProps> = ({
                 {searchParams.returnDate && format(new Date(searchParams.returnDate), "EEE, dd MMM")}
               </span>
             </h2>
-
-           
           </div>
 
           {/* Return Filters */}
@@ -876,4 +872,3 @@ const RoundTripSelectionView: React.FC<RoundTripSelectionViewProps> = ({
 }
 
 export default RoundTripSelectionView
-

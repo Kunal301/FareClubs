@@ -1,9 +1,9 @@
 /** @type {import('tailwindcss').Config} */
-export const darkMode = ["class"];
+export const darkMode = ["class"]
 export const content = [
   "./src/**/*.{html,js,ts,jsx,tsx}", // Ensures Tailwind scans all components
   "./node_modules/@shadcn/ui/components/**/*.{js,ts,jsx,tsx}",
-];
+]
 export const theme = {
   extend: {
     colors: {
@@ -47,7 +47,5 @@ export const theme = {
       sm: "calc(var(--radius) - 4px)",
     },
   },
-};
-// export const plugins = [require("@tailwindcss/forms"),
-// require("tailwindcss-animate")];
-  
+}
+export const plugins = [require("tailwindcss-animate")]

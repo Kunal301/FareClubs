@@ -4,9 +4,11 @@ import type React from "react"
 import { Luggage, Info } from "lucide-react"
 import { format, parseISO, isValid } from "date-fns"
 import { useNavigate } from "react-router-dom"
-import { useState } from "react"
+import { useState } from "react" // Ensure useEffect is imported
 import axios from "axios"
 import { AirlineLogo } from "../common/AirlineLogo"
+import { getFareQuote } from "../../services/fareService"
+import FareOptionsModal from "../FareModal/FareOptionsModal"
 
 interface FlightCardProps {
   flight: {
@@ -45,6 +47,7 @@ interface FlightCardProps {
   onSelect: () => void
   onBook: (flightId: number) => void
   OptionId: string | number // Updated to accept both string and number
+  onViewFareRules?: (flightId: string) => void
 }
 
 // Function to get fare type label
@@ -72,6 +75,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
   onSelect,
   onBook,
   OptionId,
+  onViewFareRules,
 }) => {
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
@@ -81,9 +85,15 @@ export const FlightCard: React.FC<FlightCardProps> = ({
   const [error, setError] = useState<string | null>(null)
   const [searchResults, setSearchResults] = useState<any>(null)
   const [searchParams, setSearchParams] = useState<any>(null)
+  const [validationInfo, setValidationInfo] = useState<any>(null)
+  const [showFareOptions, setShowFareOptions] = useState(false)
+  const [fareOptions, setFareOptions] = useState<any[]>([])
+  const [fareQuoteData, setFareQuoteData] = useState<any>(null) // To store the whole FareQuote response
+  const [fareQuoteResultIndex, setFareQuoteResultIndex] = useState<string | null>(null)
 
   const handleBookNow = async () => {
     setIsLoading(true)
+    setError("")
 
     try {
       // Get the TokenId from localStorage
@@ -105,35 +115,170 @@ export const FlightCard: React.FC<FlightCardProps> = ({
         setIsLoading(false)
         return
       }
+      // Store the original price for comparison
+      const originalPrice = Number.parseFloat(flight.OptionPriceInfo.TotalPrice)
+      setPreviousFare(originalPrice)
+      setFareQuoteResultIndex(null) // Reset before new quote
 
-      // Prepare the FareQuote request
-      const fareQuoteRequest = {
-        EndUserIp: "192.168.10.10", // This should be dynamically determined in production
-        TokenId: tokenId,
-        TraceId: traceId,
-        ResultIndex: flight.OptionId,
+      // Make sure we're using the correct ResultIndex
+      const originalSearchReultIndex = flight.OptionId?.toString() || flight.SearchSegmentId?.toString() || ""
+      console.log("FlightCard: Sending FareQuote request for originalSearchReultIndex:", originalSearchReultIndex)
+
+      // Call the FareQuote API
+      const fareQuoteResponse = await getFareQuote(tokenId, traceId, originalSearchReultIndex)
+
+      console.log("FareQuote response:", fareQuoteResponse)
+
+      if (fareQuoteResponse.Response && fareQuoteResponse.Response.Results) {
+        const quoteResults = fareQuoteResponse.Response.Results
+        setFareQuoteData(quoteResults) // Store full quote data
+        setFareQuoteResultIndex(quoteResults.ResultIndex) // <<< STORE FARE QUOTE RESULT INDEX
+        console.log("FlightCard: Stored fareQuoteResultIndex:", quoteResults.ResultIndex)
+
+        // Check if price has changed
+        const newPrice = quoteResults.Fare.PublishedFare
+        const originalPrice = Number.parseFloat(flight.OptionPriceInfo.TotalPrice)
+        const priceDifference = Math.abs(newPrice - originalPrice)
+
+        console.log(`Original price: ${originalPrice}, New price: ${newPrice}, Difference: ${priceDifference}`)
+
+        // Extract validation information from quoteResults
+        if (quoteResults) {
+          setValidationInfo({
+            isGSTMandatory: quoteResults.IsGSTMandatory,
+            isPanRequiredAtBook: quoteResults.IsPanRequiredAtBook,
+            isPanRequiredAtTicket: quoteResults.IsPanRequiredAtTicket,
+            isPassportRequiredAtBook: quoteResults.IsPassportRequiredAtBook,
+            isPassportRequiredAtTicket: quoteResults.IsPassportRequiredAtTicket,
+            isHoldAllowed: quoteResults.IsHoldAllowed, // Assuming IsHoldAllowed is part of quoteResults
+            isRefundable: quoteResults.IsRefundable, // Assuming IsRefundable is part of quoteResults
+          })
+        }
+
+        // Generate fare options based on the base fare
+        const baseFare = newPrice || originalPrice
+
+        // Generate fare options that match your design
+        const generatedFareOptions = [
+          {
+            name: "SAVER",
+            price: Math.round(baseFare * 0.95), // 5% less than base fare
+            description: "Basic fare with limited flexibility",
+            baggage: {
+              cabinBaggage: "7 Kgs",
+              checkInBaggage: "15 Kgs",
+            },
+            flexibility: {
+              cancellationFee: `Cancellation fee starts at ₹ ${Math.round(baseFare * 0.08)} (up to 4 hours before departure)`,
+              dateChangeFee: `Date Change fee starts at ₹ ${Math.round(baseFare * 0.05)} up to 4 hrs before departure`,
+              isFreeChange: false,
+            },
+            seats: {
+              free: false,
+              complimentaryMeals: false,
+            },
+            benefits: {
+              priorityCheckIn: false,
+              priorityBoarding: false,
+              extraBaggage: "",
+              expressCheckIn: false,
+            },
+            worth: 0,
+          },
+          {
+            name: "FARE BY FARECLUBS",
+            price: baseFare,
+            description: "Standard fare with some flexibility",
+            baggage: {
+              cabinBaggage: "7 Kgs",
+              checkInBaggage: "15 Kgs",
+            },
+            flexibility: {
+              cancellationFee: `Cancellation fee starts at ₹ ${Math.round(baseFare * 0.06)} (up to 4 hours before departure)`,
+              dateChangeFee: "Free Date Change",
+              isFreeChange: true,
+            },
+            seats: {
+              free: false,
+              complimentaryMeals: false,
+            },
+            benefits: {
+              priorityCheckIn: false,
+              priorityBoarding: false,
+              extraBaggage: "",
+              expressCheckIn: false,
+            },
+            worth: Math.round(baseFare * 0.04),
+          },
+          {
+            name: "FLEXI PLUS",
+            price: Math.round(baseFare * 1.05), // 5% more than base fare
+            description: "Flexible fare with added benefits",
+            baggage: {
+              cabinBaggage: "7 Kgs",
+              checkInBaggage: "15 Kgs",
+            },
+            flexibility: {
+              cancellationFee: `Lower Cancellation fee of ₹ ${Math.round(baseFare * 0.05)} (up to 4 hours before departure)`,
+              dateChangeFee: `Lower Date Change fee ₹ ${Math.round(baseFare * 0.025)} up to 4 hrs before departure`,
+              isFreeChange: false,
+            },
+            seats: {
+              free: true,
+              complimentaryMeals: true,
+            },
+            benefits: {
+              priorityCheckIn: false,
+              priorityBoarding: false,
+              extraBaggage: "",
+              expressCheckIn: false,
+            },
+            worth: 0,
+          },
+          {
+            name: "PREMIUM",
+            price: Math.round(baseFare * 1.15), // 15% more than base fare
+            description: "Premium fare with maximum flexibility and benefits",
+            baggage: {
+              cabinBaggage: "7 Kgs",
+              checkInBaggage: "20 Kgs",
+            },
+            flexibility: {
+              cancellationFee: `Lower Cancellation fee of ₹ ${Math.round(baseFare * 0.035)} (up to 4 hours before departure)`,
+              dateChangeFee: "Free Date Change up to 4 hrs before departure",
+              isFreeChange: true,
+            },
+            seats: {
+              free: true,
+              complimentaryMeals: true,
+            },
+            benefits: {
+              priorityCheckIn: true,
+              priorityBoarding: true,
+              extraBaggage: "5 Kgs",
+              expressCheckIn: true,
+            },
+            worth: Math.round(baseFare * 0.06),
+          },
+        ]
+
+        setFareOptions(generatedFareOptions)
+
+        // Show significant price change popup if needed
+        if (priceDifference > 30) {
+          console.log(`Significant price change detected: ${originalPrice} -> ${newPrice}`)
+          setPreviousFare(originalPrice)
+          setUpdatedFare(newPrice)
+          setShowPopup(true)
+          setIsLoading(false)
+          return
+        }
+
+        // Show fare options modal
+        setShowFareOptions(true)
+      } else {
+        setError(fareQuoteResponse.Error?.ErrorMessage || "Failed to get fare quote. Please try again.")
       }
-
-      console.log("Sending FareQuote request:", fareQuoteRequest)
-
-      // Call our backend proxy instead of directly calling the TBO API
-      const response = await axios.post("http://localhost:5000/api/farequote", fareQuoteRequest, {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      })
-
-      console.log("FareQuote response:", response.data)
-
-      // Navigate to booking page with the FareQuote response
-      navigate("/booking", {
-        state: {
-          fareQuoteResponse: response.data,
-          searchParams: searchParams,
-          flight: flight,
-        },
-      })
     } catch (error) {
       console.error("FareQuote error:", error)
       if (axios.isAxiosError(error)) {
@@ -150,16 +295,80 @@ export const FlightCard: React.FC<FlightCardProps> = ({
     }
   }
 
+  const handleSelectFare = (fareOption: any) => {
+    setShowFareOptions(false)
+
+    // Get the TokenId and TraceId from localStorage
+    const tokenId = localStorage.getItem("tokenId") || localStorage.getItem("TokenId")
+    const traceId = localStorage.getItem("traceId")
+
+    const resultIndexForBooking =
+      fareQuoteResultIndex || flight.OptionId?.toString() || flight.SearchSegmentId?.toString() || ""
+    console.log(
+      "FlightCard: Navigating to booking with resultIndexForBooking:",
+      resultIndexForBooking,
+      "(fareQuoteResultIndex was:",
+      fareQuoteResultIndex,
+      ")",
+    )
+
+    // Create a modified flight object with the selected fare price
+    const modifiedFlight = {
+      ...flight,
+      OptionPriceInfo: {
+        ...flight.OptionPriceInfo,
+        TotalPrice: fareOption.price.toString(),
+        // Adjust base price and tax proportionally
+        TotalBasePrice: Math.round(fareOption.price * 0.85).toString(),
+        TotalTax: Math.round(fareOption.price * 0.15).toString(),
+      },
+      // Add selected fare details
+      SelectedFare: {
+        name: fareOption.name,
+        benefits: fareOption.benefits,
+        baggage: fareOption.baggage,
+        flexibility: fareOption.flexibility,
+        seats: fareOption.seats,
+      },
+    }
+
+    // Get search params to determine trip type
+    const storedSearchParams = localStorage.getItem("searchParams")
+    const searchParams = storedSearchParams ? JSON.parse(storedSearchParams) : null
+
+    // Explicitly set these based on actual search params, not assumptions
+    // For one-way flights, we explicitly set isRoundTrip to false and returnFlight to null
+    const isRoundTrip = searchParams?.tripType === "round-trip"
+    const isMultiCity = searchParams?.tripType === "multi-city"
+
+    navigate("/booking", {
+      state: {
+        flight: modifiedFlight,
+        searchParams: searchParams,
+        tokenId: tokenId,
+        traceId: traceId,
+        fareQuoteResponse: { Response: { Results: fareQuoteData || { Fare: { PublishedFare: fareOption.price } } } },
+        validationInfo: validationInfo,
+        resultIndex: resultIndexForBooking,
+        selectedFare: fareOption,
+        // Explicitly set these based on actual search params, not assumptions
+        isRoundTrip: isRoundTrip,
+        isMultiCity: isMultiCity,
+        // For one-way flights, we explicitly set returnFlight to null
+        returnFlight: null,
+        multiCityFlights: null,
+      },
+    })
+  }
+
   const handleContinueBooking = () => {
     setShowPopup(false)
-    navigate("/booking", {
-      state: { flight, previousFare, updatedFare },
-    })
+    setShowFareOptions(true)
   }
 
   const handleGoBack = () => {
     setShowPopup(false)
-    navigate("/search-results")
+    // Stay on search results page
   }
 
   const formatDateTime = (dateTimeStr: string) => {
@@ -183,6 +392,12 @@ export const FlightCard: React.FC<FlightCardProps> = ({
     const depDate = new Date(departureTime)
     const arrDate = new Date(arrivalTime)
     return arrDate.getDate() > depDate.getDate()
+  }
+
+  const handleViewFareRules = () => {
+    if (onViewFareRules) {
+      onViewFareRules(OptionId.toString())
+    }
   }
 
   return (
@@ -258,34 +473,63 @@ export const FlightCard: React.FC<FlightCardProps> = ({
         </div>
       </div>
 
+      {/* Price Change Popup */}
       {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg text-center w-1/3">
-            <h2 className="text-xl font-semibold mb-4">⚠️ Fare Update</h2>
-            <div className="flex justify-between items-center p-4 bg-gray-100 rounded">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center w-96">
+            {/* Company Logo */}
+            <div className="flex justify-center mb-4">
+              <img
+                src="/images/logo.png"
+                alt="FareClubs Logo"
+                className="h-16"
+                onError={(e) => {
+                  e.currentTarget.src = "/community-travel-deals.png"
+                }}
+              />
+            </div>
+
+            <h2 className="text-xl font-semibold mb-6">Fare Update</h2>
+
+            <div className="flex justify-between items-center p-4 bg-gray-100 rounded mb-6">
               <div className="text-left">
-                <p className="text-gray-600">Previous Fare:</p>
-                <p className="text-lg font-semibold text-[#eb0066]">₹{previousFare}</p>
+                <p className="text-gray-600 text-sm">Previous Fare:</p>
+                <p className="text-lg font-semibold text-red-500">₹{previousFare?.toFixed(2)}</p>
               </div>
-              <div className="text-left">
-                <p className="text-gray-600">Updated Fare:</p>
-                <p className="text-lg font-semibold text-green-500">₹{updatedFare}</p>
+              <div className="text-2xl font-bold text-gray-400">→</div>
+              <div className="text-right">
+                <p className="text-gray-600 text-sm">Updated Fare:</p>
+                <p className="text-lg font-semibold text-green-500">₹{updatedFare?.toFixed(2)}</p>
               </div>
             </div>
-            <div className="mt-6 flex justify-center gap-4">
+
+            <div className="flex justify-between gap-4">
               <button
                 onClick={handleContinueBooking}
-                className="px-4 py-2 bg-[#007AFF] text-white rounded hover:bg-[#007aff]"
+                className="flex-1 px-4 py-2 bg-[#007AFF] text-white rounded hover:bg-blue-600 transition-colors"
               >
                 Continue Booking
               </button>
-              <button onClick={handleGoBack} className="px-4 py-2 bg-[#FF214C] text-white rounded hover:bg-red-600">
+              <button
+                onClick={handleGoBack}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
+              >
                 Go Back
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Fare Options Modal */}
+      <FareOptionsModal
+        isOpen={showFareOptions}
+        onClose={() => setShowFareOptions(false)}
+        flight={flight}
+        onSelectFare={handleSelectFare}
+        fareOptions={fareOptions}
+      />
+
       <div className="border-t pt-4">
         <div className="flex space-x-4 mb-4">
           <button
@@ -346,6 +590,11 @@ export const FlightCard: React.FC<FlightCardProps> = ({
                 </div>
               )}
             </div>
+            <div className="mt-4 flex justify-end">
+              <button onClick={handleViewFareRules} className="text-[#007aff] hover:text-[#0056b3] text-sm font-medium">
+                View Fare Rules
+              </button>
+            </div>
           </div>
         )}
 
@@ -369,6 +618,11 @@ export const FlightCard: React.FC<FlightCardProps> = ({
               <span>Total Amount</span>
               <span>₹{flight.OptionPriceInfo.TotalPrice}</span>
             </div>
+            <div className="pt-2 flex justify-end">
+              <button onClick={handleViewFareRules} className="text-[#007aff] hover:text-[#0056b3] text-sm font-medium">
+                View Fare Rules
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -376,3 +630,4 @@ export const FlightCard: React.FC<FlightCardProps> = ({
   )
 }
 
+export default FlightCard

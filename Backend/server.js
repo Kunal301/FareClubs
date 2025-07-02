@@ -1,6 +1,8 @@
 import express from "express"
 import cors from "cors"
 import axios from "axios"
+import mongoose from "mongoose"
+import airportRoutes from "./routes/airportRoutes.js"
 
 const app = express()
 app.use(
@@ -11,6 +13,17 @@ app.use(
 )
 
 app.use(express.json())
+
+// MongoDB connection
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/fareclubs"
+
+mongoose
+  .connect(MONGODB_URI)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("MongoDB connection error:", err))
+
+// Use airport routes
+app.use("/api/airports", airportRoutes)
 
 const SHARED_API_BASE_URL = "http://Sharedapi.tektravels.com/SharedData.svc/rest"
 const AIR_API_BASE_URL = "http://api.tektravels.com/BookingEngineService_Air/AirService.svc/rest"
@@ -242,7 +255,7 @@ app.post("/api/search", async (req, res) => {
         Response: {
           ResponseStatus: 1,
           Error: { ErrorCode: 0, ErrorMessage: "" },
-          TraceId: req.body.TokenId + "-multi-" + Date.now(),
+          TraceId: req.body.TokenId,
           Results: allResults,
         },
       }
@@ -323,6 +336,10 @@ app.post("/api/search", async (req, res) => {
   }
 })
 
+app.get("/api/health", (req, res) => {
+  res.status(200).send("Server is healthy")
+})
+
 // FareQuote endpoint
 app.post("/api/farequote", async (req, res) => {
   try {
@@ -366,6 +383,316 @@ app.post("/api/book", async (req, res) => {
     res.status(error.response?.status || 500).json({
       Status: "Failed",
       Description: error.response?.data?.Error?.ErrorMessage || "Booking failed",
+      StatusCode: error.response?.status || 500,
+    })
+  }
+})
+
+// Alias for /api/book to support /api/air/book requests
+app.post("/api/air/book", async (req, res) => {
+  try {
+    console.log("Book request (via /api/air/book):", JSON.stringify(req.body, null, 2))
+
+    const response = await axios.post(`${AIR_API_BASE_URL}/Book`, req.body, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    })
+
+    console.log("Book response status:", response.status)
+    res.json(response.data)
+  } catch (error) {
+    console.error("Book error:", error.response?.data || error.message)
+    res.status(error.response?.status || 500).json({
+      Status: "Failed",
+      Description: error.response?.data?.Error?.ErrorMessage || "Booking failed",
+      StatusCode: error.response?.status || 500,
+    })
+  }
+})
+
+app.post("/api/farerule", async (req, res) => {
+  try {
+    console.log("FareRule request:", JSON.stringify(req.body, null, 2))
+
+    if (!AIR_API_BASE_URL) {
+      console.error("AIR_API_BASE_URL environment variable is not set")
+      return res.status(500).json({
+        Status: "Failed",
+        Description: "API base URL is not configured. Please set AIR_API_BASE_URL environment variable.",
+        StatusCode: 500,
+      })
+    }
+
+    // Validate the ResultIndex
+    if (!req.body.ResultIndex) {
+      console.error("Missing ResultIndex in request")
+      return res.status(400).json({
+        Status: "Failed",
+        Description: "ResultIndex is required",
+        StatusCode: 400,
+        Response: {
+          Error: {
+            ErrorCode: 400,
+            ErrorMessage: "Missing ResultIndex",
+          },
+        },
+      })
+    }
+
+    // Log the ResultIndex length for debugging
+    console.log("ResultIndex length:", req.body.ResultIndex.length)
+
+    const response = await axios.post(`${AIR_API_BASE_URL}/FareRule`, req.body, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      timeout: 30000, // Add a timeout to prevent hanging requests
+    })
+
+    console.log("FareRule response status:", response.status)
+    console.log("FareRule response data:", JSON.stringify(response.data, null, 2))
+
+    // Check if the response contains an error
+    if (
+      response.data.Response &&
+      response.data.Response.Error &&
+      response.data.Response.Error.ErrorMessage &&
+      response.data.Response.Error.ErrorMessage.trim() !== ""
+    ) {
+      console.error("FareRule API returned an error:", response.data.Response.Error)
+
+      // Return a more user-friendly response
+      return res.status(200).json({
+        Status: "Success",
+        Response: {
+          Error: response.data.Response.Error,
+          FareRules: {
+            FareRuleDetail: "No fare rules available for this flight.",
+          },
+        },
+      })
+    }
+
+    // Pass through the response as is
+    res.json(response.data)
+  } catch (error) {
+    console.error("FareRule error:", error.message)
+    if (error.response) {
+      console.error("FareRule error response:", error.response.data)
+      console.error("FareRule error status:", error.response.status)
+    }
+
+    // Return a structured error response
+    res.status(error.response?.status || 500).json({
+      Status: "Failed",
+      Description: error.response?.data?.Error?.ErrorMessage || error.message || "FareRule failed",
+      StatusCode: error.response?.status || 500,
+      Response: {
+        Error: {
+          ErrorCode: error.response?.status || 500,
+          ErrorMessage: error.response?.data?.Error?.ErrorMessage || error.message || "Failed to fetch fare rules",
+        },
+        FareRules: null,
+      },
+    })
+  }
+})
+
+app.post("/api/ssr", async (req, res) => {
+  try {
+    console.log("SSR request:", JSON.stringify(req.body, null, 2))
+
+    if (!AIR_API_BASE_URL) {
+      console.error("AIR_API_BASE_URL environment variable is not set")
+      return res.status(500).json({
+        Status: "Failed",
+        Description: "API base URL is not configured. Please set AIR_API_BASE_URL environment variable.",
+        StatusCode: 500,
+      })
+    }
+
+    // Validate required parameters
+    if (!req.body.TokenId || !req.body.TraceId || !req.body.ResultIndex) {
+      console.error("Missing required parameters in SSR request")
+      return res.status(400).json({
+        Status: "Failed",
+        Description: "TokenId, TraceId, and ResultIndex are required",
+        StatusCode: 400,
+        Response: {
+          Error: {
+            ErrorCode: 400,
+            ErrorMessage: "Missing required parameters",
+          },
+        },
+      })
+    }
+
+    console.log(
+      `Making SSR API call to ${AIR_API_BASE_URL}/SSR with TokenId: ${req.body.TokenId}, TraceId: ${req.body.TraceId}, ResultIndex: ${req.body.ResultIndex}`,
+    )
+
+    const response = await axios.post(`${AIR_API_BASE_URL}/SSR`, req.body, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      timeout: 30000, // Add a timeout to prevent hanging requests
+    })
+
+    console.log("SSR response status:", response.status)
+    console.log("SSR response data:", JSON.stringify(response.data, null, 2))
+
+    // Check if the response contains an error
+    if (
+      response.data.Response &&
+      response.data.Response.Error &&
+      response.data.Response.Error.ErrorMessage &&
+      response.data.Response.Error.ErrorMessage.trim() !== ""
+    ) {
+      console.error("SSR API returned an error:", response.data.Response.Error)
+
+      // Return a more user-friendly response
+      return res.status(200).json({
+        Status: "Success",
+        Response: {
+          Error: response.data.Response.Error,
+          SSROptions: null,
+        },
+      })
+    }
+
+    // Pass through the response as is
+    res.json(response.data)
+  } catch (error) {
+    console.error("SSR error:", error.message)
+    if (error.response) {
+      console.error("SSR error response:", error.response.data)
+      console.error("SSR error status:", error.response.status)
+    }
+
+    // Return a structured error response
+    res.status(error.response?.status || 500).json({
+      Status: "Failed",
+      Description: error.response?.data?.Error?.ErrorMessage || error.message || "SSR request failed",
+      StatusCode: error.response?.status || 500,
+      Response: {
+        Error: {
+          ErrorCode: error.response?.status || 500,
+          ErrorMessage: error.response?.data?.Error?.ErrorMessage || error.message || "Failed to fetch SSR options",
+        },
+        SSROptions: null,
+      },
+    })
+  }
+})
+
+// Add SSR to booking endpoint
+app.post("/api/add-ssr", async (req, res) => {
+  try {
+    console.log("Add SSR request:", JSON.stringify(req.body, null, 2))
+
+    if (!AIR_API_BASE_URL) {
+      console.error("AIR_API_BASE_URL environment variable is not set")
+      return res.status(500).json({
+        Status: "Failed",
+        Description: "API base URL is not configured. Please set AIR_API_BASE_URL environment variable.",
+        StatusCode: 500,
+      })
+    }
+
+    // Validate required parameters
+    if (!req.body.TokenId || !req.body.BookingId || !req.body.SSROptions) {
+      console.error("Missing required parameters in Add SSR request")
+      return res.status(400).json({
+        Status: "Failed",
+        Description: "TokenId, BookingId, and SSROptions are required",
+        StatusCode: 400,
+        Response: {
+          Error: {
+            ErrorCode: 400,
+            ErrorMessage: "Missing required parameters",
+          },
+        },
+      })
+    }
+
+    // For post-booking SSR additions, we use the TicketReIssue endpoint
+    const response = await axios.post(`${AIR_API_BASE_URL}/TicketReIssue`, req.body, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      timeout: 30000,
+    })
+
+    console.log("Add SSR response status:", response.status)
+    console.log("Add SSR response data:", JSON.stringify(response.data, null, 2))
+
+    // Check if the response contains an error
+    if (
+      response.data.Response &&
+      response.data.Response.Error &&
+      response.data.Response.Error.ErrorMessage &&
+      response.data.Response.Error.ErrorMessage.trim() !== ""
+    ) {
+      console.error("Add SSR API returned an error:", response.data.Response.Error)
+
+      return res.status(200).json({
+        Status: "Success",
+        Response: {
+          Error: response.data.Response.Error,
+          Result: null,
+        },
+      })
+    }
+
+    // Pass through the response as is
+    res.json(response.data)
+  } catch (error) {
+    console.error("Add SSR error:", error.message)
+    if (error.response) {
+      console.error("Add SSR error response:", error.response.data)
+      console.error("Add SSR error status:", error.response.status)
+    }
+
+    res.status(error.response?.status || 500).json({
+      Status: "Failed",
+      Description: error.response?.data?.Error?.ErrorMessage || error.message || "Add SSR request failed",
+      StatusCode: error.response?.status || 500,
+      Response: {
+        Error: {
+          ErrorCode: error.response?.status || 500,
+          ErrorMessage: error.response?.data?.Error?.ErrorMessage || error.message || "Failed to add SSR options",
+        },
+        Result: null,
+      },
+    })
+  }
+})
+
+// Add a new endpoint for LCC ticket booking
+app.post("/api/air/ticket", async (req, res) => {
+  try {
+    console.log("Ticket request:", JSON.stringify(req.body, null, 2))
+
+    const response = await axios.post(`${AIR_API_BASE_URL}/Ticket`, req.body, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    })
+
+    console.log("Ticket response status:", response.status)
+    console.log("Ticket response data:", JSON.stringify(response.data, null, 2))
+    res.json(response.data)
+  } catch (error) {
+    console.error("Ticket error:", error.response?.data || error.message)
+    res.status(error.response?.status || 500).json({
+      Status: "Failed",
+      Description: error.response?.data?.Error?.ErrorMessage || "Ticketing failed",
       StatusCode: error.response?.status || 500,
     })
   }

@@ -1,0 +1,97 @@
+General API Guidelines
+Parameters, Prerequisites & Process for integration:
+
+1. Client should have appropriate test credentials.
+
+2. Client id ApiIntegrationNew should be passed in API authentication request.
+
+3. Client should have all Url’s and understanding of API methods.
+
+4. Startup Meeting with API team before integration after going through with the document.
+
+5. In between integration follow the sample verification process.
+
+http://api.tektravels.com/FlightAPIDocument/SampleVerification.aspx
+6. Correct all the changes in test cases as suggested in sample verification.
+
+7. After the correction and verification of sample, create all the mandatory test cases [1 to 10] and send the test cases to support team along with request id/subject on which sample has been verified.
+
+8. Once the support team receives all the test cases they will do the initial verification
+
+I. Token and Trace that should be same throughout the booking process.
+II. Verification of all mandatory methods for each test case
+III. Error message in each method for all test cases.
+IV. Cases should be made on specific search criteria as per test cases.
+V. Get Booking details should be called for each case.
+9. This process will take 24 to 48 working hours of the support team, if any discrepancy is found in the initial verification then support team will reject the cases and client need to share again with corrections.
+
+10. After successful initial verification support team will verify and validate all methods and then provide their findings, client need to submit rejected test cases after doing correction as per rejection reason.
+
+11. Support team will share certification sheet of the submitted test cases along with validation checklist.
+
+12. Implement all validations as provided in validation document at client site.
+
+
+Dos and Donts:
+
+1. Always send API logs request and response in JSON format as an attachment.
+
+2. Follow the process of integration as provided in Pathway.
+
+https://api.tektravels.com/FlightAPIDocument/Pathway.aspx
+3. Generate single token in a day as it is valid for 24 hours (00:00 AM to 11:59 PM), so do not generate token id with every search.
+
+4. Trace id is valid for 15 Minutes only.
+
+
+Implementations & Suggestions:
+
+1. Client will get two passwords at the time of API registration, one for API which can be used for integration and another will be for TBO B2B login from where client can refer the search or any other suggestion for implementation. Below is the link of TBO B2B Login-
+https://api.tektravels.com/
+
+2. In case of Domestic return both result indexes OB and IB will come in Search response and similarly all methods should be called for first OB and then IB, respectively 2 PNRs will be generated for outbound and inbound journey.
+
+3. In case of International return result index OB will come in response and in segments details both journey details will be available(outbound, inbound).
+
+4. In case of LCC special return, in search response both OB and IB results will come and, in fare quote request OB and IB should be passed as comma separated ("ResultIndex": "OB4,IB4",) next in fare quote response only OB result index will return and complete booking should be made with that particular result index. Hence one PNR will be generated in case of special return.
+
+5. Additional SSR(Meal/Baggage/Seat) can be availed in case of LCC flights only, SSR need to pass in ticket request from SSR response to avail the services. In case of GDS meal and seat will be provided free of charges if airline is providing same.SSR need to pass in Book request from SSR response to avail the services.
+
+6. Baggage, Meal and seat array shouldnt be passed as null, Also baggage and seat can not be taken for infant pax.
+
+7. Meal Dynamic and Seat dynamic should be passed in array in case of LCC flights.
+
+8. Meal and seat should be passed in string in case of Non-LCC flights.
+
+9. In between integration process if SSR is being implemented then recent method called before ticketing should be SSR else taken SSR will not be considered in ticketing and thus gives error of invalid Meal, Baggage etc.
+
+10. Fares in ticket request should be taken from fare quote response from fare breakdown array.
+
+Below is the example of calculation understanding:
+
+If Base Fare received is 4000 and passenger count is 2 irrespective pax type then divide 4000 by 2 and then pass 2000 for each passenger in ticket request and the same process needs to be followed for the tax node.
+
+
+Pricing Formula:
+
+Published Fare: Published fare is the price which agency will charge from end customer, if agency wants to add any additional markup then they can add same at their end.
+Formula: BaseFare + Tax + OtherCharges + ServiceFee + AdditionalTxnFeepub + AirlineTransFee + GST + TDS + Agency additional Markup (if applied from profile)
+
+Offered Fare: Offered Fare is the price which is provided by airline after deduction of only commission.
+Formula: Published Fare - Commission Earned (Commission + PLB + Incentive) - TDS - Agency additional Markup (if applied from profile)
+Note: TDS is not the part of offered fare in search response only
+
+Net Payable: Net Payable is the fare which is payable to TBO by agency.
+Formula: Published Fare – (CommissionEarned+ IncentiveEarned+ PLBEarned + AdditionalTxnFee) + (TdsOnCommission + TdsOnIncentive + TdsOnPLB) + GST(IGSTAmount+CGSTAmount+SGSTAmount+CessAmount)
+
+10. If your PNR has been generated and you have received error in ticket method from supplier side, then send the logs for same, will consider same from certification process if error will be from supplier side.
+
+11. Book and ticket method should be called only for Non-LCC airlines.
+
+12. Ticket method is only called for LCC airlines.
+
+13. Amount will be deducted from agency wallet once ticket is generated successfully. Thus there is no payment gateway implementation in API from our end, that client need to implement at their end.
+
+14. If "IsGSTMandatory" node is received true in fare quote response then GST details need to be pass for lead passenger in Book/Ticket request.
+
+15. Passport details are mandatory to send in Book/ticket request in case of international journey.

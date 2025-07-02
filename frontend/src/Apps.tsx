@@ -11,9 +11,10 @@ import { SessionTimeoutProvider } from "./context/SessionTimeoutProvider"
 
 const App: React.FC = () => {
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true) // <-- Step 1
   const navigate = useNavigate()
 
-  // Check for existing session on app load
+  // Step 1: Check for existing session on app load
   useEffect(() => {
     const storedSessionId = localStorage.getItem("sessionId")
     const storedTokenId = localStorage.getItem("tokenId") || localStorage.getItem("TokenId")
@@ -28,17 +29,16 @@ const App: React.FC = () => {
       localStorage.removeItem("TokenId")
       setSessionId(null)
     }
+
+    setLoading(false) // <-- Only allow rendering once check is done
   }, [])
 
   // Update sessionId state when localStorage changes
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
-      // Update if sessionId or tokenId changed
       if (event.key === "sessionId" || event.key === "tokenId" || event.key === "TokenId") {
         const storedSessionId = localStorage.getItem("sessionId")
         const storedTokenId = localStorage.getItem("tokenId") || localStorage.getItem("TokenId")
-
-        // Only maintain session if both exist
         if (storedSessionId && storedTokenId) {
           if (storedSessionId !== sessionId) {
             setSessionId(storedSessionId)
@@ -55,7 +55,6 @@ const App: React.FC = () => {
     }
   }, [sessionId])
 
-  // Update the handleLoginSuccess function to accept memberInfo
   const handleLoginSuccess = (tokenId: string, memberInfo: any) => {
     setSessionId(tokenId)
     localStorage.setItem("tokenId", tokenId)
@@ -63,7 +62,6 @@ const App: React.FC = () => {
     navigate("/dashboard")
   }
 
-  // Protected route component - memoize to prevent unnecessary re-renders
   const ProtectedRoute = React.memo(({ children }: { children: React.ReactNode }) => {
     if (!sessionId) {
       return <Navigate to="/login" replace />
@@ -71,13 +69,15 @@ const App: React.FC = () => {
     return <>{children}</>
   })
 
+  // Step 2: Don't render until session check is done
+  if (loading) return null;
+
   return (
     <SessionTimeoutProvider timeoutMinutes={15}>
       <Routes>
-        {/* Redirect root to login or dashboard based on session */}
-        <Route path="/" element={sessionId ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
+        {/* Step 3: Root route defaults to login if not authenticated */}
+        <Route path="/" element={<Navigate to={sessionId ? "/dashboard" : "/login"} replace />} />
 
-        {/* Authentication route */}
         <Route
           path="/login"
           element={
@@ -117,7 +117,7 @@ const App: React.FC = () => {
           }
         />
 
-        {/* Catch-all route for 404 */}
+        {/* Catch-all for 404 */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </SessionTimeoutProvider>
@@ -125,4 +125,3 @@ const App: React.FC = () => {
 }
 
 export default App
-

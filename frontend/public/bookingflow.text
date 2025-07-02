@@ -1,0 +1,17 @@
+The Universal Air API offers the following pathway to create a booking as per the provided criteria.
+
+
+  Authenticate: This Method is used to login into the TBO API service, once logged the service will be available till mid night i.e. 11:59 PM without   authenticating.
+  Search: This method provides all the available itineraries of selected or all airlines.
+  FareRule: In this method you will receive all the details about the selected result index.
+  FareQuote: In this method pricing will be provided according to the passenger count.
+  SSR: Details of all the available amenities like Seat selection, Meal and Baggage is received in this method.
+  Book: In case of Non-LCC, we don’t have to pay instantly. Therefore, In that case all the passenger details were passed in this method to generate the PNR in   it’s response which can be hold up to last ticketing date. Once ticket method is called after this then only price gets deducted from agency’s account.
+  Ticket: In case of LCC pass all the passenger details and generate the PNR in response, Invoice will be generated in this method. But for Non LCC as PNR is   already generated, pass PNR details to ticket the booking.
+  GetBookingDetails: This method is called to know the status of the booking, in case at the time of ticketing or any further method, you receive any network   error or timeout error then it is suggested to always call this method to know the exact status of the booking.
+
+
+
+  GetCancellationCharges: This method can be used after PNR is generated, to get the exact cancellation charges applicable if booking is cancelled at that   point of time. (As of now, this functionality is available only for 6E, SG & G8)
+  SendChangeRequest: This method is used to raise a request of cancelation (Full or Partial) or Re-issuance ( If passenger wants to book for other journey in   place of this one).
+  GetChangeRequest: Once any request is raised for a booking it goes though Ops processing, you can call this method to know the change state of the raised   PNR.

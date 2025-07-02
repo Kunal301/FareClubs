@@ -1,0 +1,571 @@
+SEARCH
+This method provides availability information with the cheapest fare option available. The request includes single query. The search request contains optional field of Return Date.
+
+Difference Between Normal and Special Return Search
+Normal Return - Can be two different airline or same airline with two fares for each outbound and inbound.
+
+Special Return - Same Airline for outbound and inbound with a single combined fare.
+
+Important Notes
+
+1. Result index of OB is for the outbound journey whereas the result index of IB is for the inbound journey.
+2. In Domestic return (For both normal return and special return), you will receive both results index differently but in international return (For both normal return and special return), both segments will come under a single result index.
+3. In case of the domestic normal return, you have call methods (Fare quote to Ticket ) twice for two different result indexes i.e OB and IB.
+4. In the case of the domestic special return, you have to send both result indexes (comma separated) in the same method.
+5. In the case of Special return, you will receive different airline for OBs and IBs search response, you have combined and pass the same airline for OB and IB in the request of fare quote.
+Time Zone Difference of Air
+
+Eg. The time duration from 02:50 to 05:15 is 2hrs 25mins for Dubai
+As Dubai time difference is 1 hr 30mins, Therefore when you add 1 hr 30mins and 2hrs 25mins you will get 3hrs 55mins.
+Time difference mentioned in highlighted is the zonal time difference as per country which you need to calculate at your end
+
+Service URL (REST) to be used:
+http://api.tektravels.com/BookingEngineService_Air/AirService.svc/rest/Search
+Search Request
+Level	Element	Format	Comments	Mandatory/ Optional
+1	EndUserIp	String	IP Address of the end user	Mandatory
+2	TokenId	String	Token ID (Token Id to be echoed back from Authenticate response)	Mandatory
+3	AdultCount	Integer	Number of adults except for Advance Search	Mandatory
+4	ChildCount	Integer	Number of children (except for Advance Search. Minimum value should be 0)	Mandatory
+5	InfantCount	Integer	Number of infants (except for Advance Search. Minimum value should be 0)	Mandatory
+6	DirectFlight	Boolean	If it is TRUE only direct flight will come. (Value – True or False)	Optional
+7	OneStopFlight	Boolean	If it is true only one stop flights will come (Value – True or False)	Optional
+8	JourneyType	Enumeration	Specify journey type (1 - OneWay, 2 - Return, 3 - Multi Stop, 4 - AdvanceSearch, 5 - Special Return)	Mandatory
+9	PreferredAirlines	String[]	This filter works only on GDS airline (null for All) i.e. ["AI","9W"]	Optional
+10	Segments []		List of segments	
+10.1	Origin	String	Origin city code (e.g. DEL)	Mandatory
+10.2	Destination	String	Destination city code(e.g. BOM)	Mandatory
+10.3	FlightCabinClass	Enumerator	Cabin class (1 for All, 2 for Economy, 3 for PremiumEconomy, 4 for Business, 5 for PremiumBusiness, 6 for First)	Mandatory
+10.4	PreferredDeparture	Date Time	Preferred departure	Mandatory
+Date Time		Format: yyyy-MM-ddTHH:mm:ss (2015-08-10T00:00:00 for any time 2015-08-10T08:00:00 for Morning Flights 2015-08-10T14:00:00 for Afternoon Flights 2015-08-10T19:00:00 for Evening Flights 2015-08-10T01:00:00 for Night Flights)	
+10.5	PreferredArrivalTim		Preferred arrival date (same as above) Format: yyyy-MM-ddTHH:mm:ss	Mandatory
+11	Sources	String[]	Airline Sources For Normal OW/RT (GDS - Amadeus/Galileo SG - SpiceJet 6E - Indigo G8 - Go Air G9 - Air Arabia FZ - Fly Dubai IX - Air India Express AK - Air Asia LB - Air Costa For LCC Spl Return: SG - SpiceJet 6E - Indigo G8 - Go Air For GDS Spl Return: GDS For Advance Search: GDS - Amadeus/Galileo For MultiStop Search: GDS - Amadeus/Galileo)	Optional
+Search Response
+Level	Element	Format	Comments	Mandatory/ Optional
+1	TraceId	String	Trace ID (Trace Id to be echoed back in further requests valid for 15 minutes only)	Mandatory
+2	Origin	String	Origin city code	Mandatory
+3	Destination	String	Destination city code	Mandatory
+4	Results [ ]	Array of element	Array of the flight results (Can be blank in case no found for requested flights search)	Mandatory
+4.1	ResultIndex	String	Result Index	Mandatory
+4.2	Source	String	Airline Source ( NotSet = 0 SpiceJet = 3 Amadeus = 4 Galileo = 5 Indigo = 6 GoAir = 10 AirArabia = 13 AirIndiaExpress = 14 AirIndiaExpressDom = 15 FlyDubai = 17 AirAsia = 19 IndigoCoupon = 24 SpiceJetCoupon = 25 GoAirCoupon = 26 IndigoTBF = 27 SpiceJetTBF = 28 GoAirTBF = 29 IndigoSPLCoupon = 30 SpiceJetSPLCoupon = 31 GoAirSPLCoupon = 32 IndigoCrpFare = 36 SpiceJetCrpFare = 37 GoAirCrpFare = 38 IndigoDstInv = 42 SpiceJetDstInv = 43 GoAirDstInv = 44 AirCosta = 46 MalindoAir = 47 BhutanAirlines = 48 AirPegasus = 49 TruJet = 50)	Mandatory
+4.3	IsLCC	Boolean	Is the result for LCC or Non LCC (Value – True or False)	Mandatory
+4.4	IsRefundable	Boolean	Is the fare refundable	Mandatory
+4.5	AirlineRemarks	String	Airline remarks	Optional
+4.6	Fare			
+4.6.1	Currency	String	Currency	Mandatory
+4.6.2	BaseFare	Decimal	The total Base fare of the booking	Mandatory
+4.6.3	Tax	Decimal	The total tax of the booking	Mandatory
+4.6.4	YQTax	Decimal	It is Fuel surcharge. It is part of Tax	Mandatory
+4.6.5	AdditionalTxnFeeOfrd	Decimal	It is additional Transaction fee that API User can charge from the customer but TBO will not charge it from you as per airline (It will always be zero)	Mandatory
+4.6.6	AdditionalTxnFeePub	Decimal	It is additional Transaction fee that API User can charge from the customer but TBO will not charge it from you as per airline (It will always be zero)	Mandatory
+4.6.7	OtherCharges	Decimal	Some additional charge by airline airport.	Mandatory
+4.6.8	ChargeBU[]		It will contain different charge breakup that is service charge or Credit card charge.For details please refer ChargeBraekUp structure	Mandatory
+4.6.8.1	TBOMarkUp	Decimal	TBO Mark-up	Mandatory
+4.6.8.2	ConvenienceCharge	Decimal	Convenience Charge	Mandatory
+4.6.8.3	OtherCharge	Decimal	Other Charge	Mandatory
+4.6.9	Discount	Decimal	The total discount amount of the booking. Will be zero for API customer.	Mandatory
+4.6.10	PublishedFare	Decimal	Published Fare	Mandatory
+4.6.11	CommissionEarned	Decimal	Total Commission of Agent. Basically it is your profit margin, earning from booking.	Mandatory
+4.6.12	PLBEarned	Decimal	Performance Linked Bonus on a particular airline.	Mandatory
+4.6.13	IncentiveEarned	Decimal	Incentive applicable(if any)	Mandatory
+4.6.14	OfferedFare	Decimal	Offered Fare	Mandatory
+4.6.15	TdsOnCommission	Decimal	TDS on the commission earned.	Mandatory
+4.6.16	TdsOnPLB	Decimal	TDS on Performance Linked Bonus.	Mandatory
+4.6.17	TdsOnIncentive	Decimal	TDS on the incentive earned.	Mandatory
+4.6.18	ServiceFee	Decimal	Service Fee	Mandatory
+4.7	FareBreakdown[]		Details of fare breakup into several part. It give fare of Each Passenger Type.	
+4.7.1	Currency	String	Currency	Mandatory
+4.7.2	PassengerType	String	Passenger Type Adult – 1 Child – 2 Infant – 3	Mandatory
+4.7.3	PassengerCount	Integer	Number of Passenger	Mandatory
+4.7.4	BaseFare	Decimal	The total Base fare of the booking for particular pax type	Mandatory
+4.7.5	Tax	Decimal	The total tax of the booking for particular pax type	Mandatory
+4.7.6	YQTax	Decimal	Fuel Surcharge for	Mandatory
+particular pax type	
+4.7.7	AdditionalTxnFeeOfrd	Decimal	It is additional Transaction fee that API User can charge from the customer but TBO will not charge it from you as per airline (It will always be zero)	Mandatory
+4.7.8	AdditionalTxnFeePub	Decimal	It is additional Transaction fee that API User can charge from the customer butTBO will not charge it from you as per airline	Mandatory
+4.8	Segments			
+4.8.1	TripIndicator	Integer	Trip Indicator (1 for Outbound 2 for Inbound flights)	Mandatory
+4.8.2	SegmentIndicator	Integer	Segment Indicator (1 for Outbound 2 for Inbound flights)	Mandatory
+4.8.3	Airline			
+4.8.3.1	AirlineCode	String	Airline code	Mandatory
+4.8.3.2	AirlineName	String	Airline name	Mandatory
+4.8.3.3	FlightNumber	String	Flight Number	Mandatory
+4.8.3.4	FareClass	String	Fare Class	Mandatory
+4.8.3.5	OperatingCarrier	String	Operating Carrier	Mandatory
+4.8.4	Origin			
+4.8.4.1	Airport			
+4.8.4.1.1	AirportCode	String	Airport code	Mandatory
+4.8.4.1.2	AirportName	String	Airport name	Optional
+4.8.4.1.3	Terminal	String	Terminal number	Optional
+4.8.4.1.4	CityCode	String	City code	Mandatory
+4.8.4.1.5	CityName	String	City name	Mandatory
+4.8.4.1.6	CountryCode	String	Country code	Mandatory
+4.8.4.1.7	CountryName	String	Country name	Mandatory
+4.8.5	DepTime	Date Time	Departure time	Mandatory
+4.8.6	Destination			
+4.8.6.1	Airport			
+4.8.6.1.1	AirportCode	String	Airport code	Mandatory
+4.8.6.1.2	AirportName	String	Airport name	Optional
+4.8.6.1.3	Terminal	String	Terminal number	Optional
+4.8.6.1.4	CityCode	String	City code	Mandatory
+4.8.6.1.5	CityName	String	City name	Mandatory
+4.8.6.1.6	CountryCode	String	Country code	Mandatory
+4.8.6.1.7	CountryName	String	Country name	Mandatory
+4.8.7	ArrTime	Date Time	Arrival time	Mandatory
+4.8.8	AccumulatedDuration	Time	Accumulated duration	Optional
+4.8.9	Duration	Time	Duration (if in case duration is 0 refer the node of Accumulated Duration)	Optional
+4.8.10	GroundTime	Time	Ground time	Optional
+4.8.11	Mile	String	Miles	Optional
+4.8.12	StopOver			
+4.8.13	StopPoint	String	Stopover point	Optional
+4.8.14	StopPointArrivalTime	Date Time	Stopover arrival time	Optional
+4.8.15	StopPointDepartureTime	Date Time	Stopover departuretime	Optional
+4.8.16	Craft	String	Craft	Optional
+4.8.17	IsETicketEligible	Boolean	Is E-Ticket eligible (Value – true or false)	Mandatory
+4.8.18	FlightStatus	String	Flight status	Mandatory
+4.8.19	Status	String	Status	Mandatory
+4.9	LastTicketDate	Date Time	Last ticket date	Mandatory
+4.1	TicketAdvisory	String	Ticket Advisory	Optional
+4.11		FareRules	This is the fare rules of the flight fare offered Note: Fare rule details will not be available on search response. Call GetFareRule method to get fare details	
+4.11.1	Origin	String	Origin	Mandatory
+4.11.2	Destination	String	Destination	Mandatory
+4.11.3	Airline	String	Airline	Mandatory
+4.11.4	FareBasisCode	String	Fare basis code	Mandatory
+4.11.5	FareRuleDetail	String List	Fare rule details	Mandatory
+4.11.6	FareRestriction	String	Fare restriction	Mandatory
+4.11.7	AirlineCode	String	Airline code	Mandatory
+5	Penalty		Cancellation/Re-issuance	Optional
+5.1	ReissueCharge	Amount	Re-issuance Charge	Optional
+5.2	CancellationCharge	Amount	CancellationCharge	Optional
+
+
+
+SAMPLE JSON
+Search Request
+{
+"EndUserIp": "192.168.10.10",
+"TokenId": "ac2751e9-4cc3-406f-b678-c947e4f57a00",
+"AdultCount": "1",
+"ChildCount": "1",
+"InfantCount": "1",
+"DirectFlight": "false",
+"OneStopFlight": "false",
+"JourneyType": "1",
+"PreferredAirlines": null,
+"Segments": [
+{
+"Origin": "DEL",
+"Destination": "BOM",
+        "FlightCabinClass": "1",
+"PreferredDepartureTime": "2024-12-30T00: 00: 00",
+"PreferredArrivalTime": "2024-12-30T00: 00: 00"
+}
+        ],
+"Sources": null
+}
+    
+        Search Response
+{
+"Response": {
+"ResponseStatus": 1,
+"Error": {
+"ErrorCode": 0,
+"ErrorMessage": ""
+},
+"TraceId": "742cc856-3d73-4cdd-b267-f0e4484c0984",
+"Origin": "DEL",
+"Destination": "BOM",
+ "Results": [
+            [
+                {
+                    "FirstNameFormat": null,
+                    "IsBookableIfSeatNotAvailable": false,
+                    "IsHoldAllowedWithSSR": false,
+                    "LastNameFormat": null,
+                    "ResultIndex": "OB2[TBO]ZJfnrNr3lGdOyRzztpRBmpqAnpA8mmd12UtfkktuuMcRXXF+7PK+/bnF1gS0v+UoWfYG/BwPX5S2UJu0HNhTZX+W/96o0tgqGP0KVW1tGjPY8Tm7/YWb8lttExBQkTLSGV483dt3Iv77t4AWMlRZsQcIJ5a8aEe/JNO/e+t/dWseJfu1sRArWmHUDpK5WQGnYfm657yX77yL7QmBYXx6VNzEOph1TLWcsXbEtP8RLU1Jvu0hkHPkAqMf2Gz7KMzgq0WsGDlAGby3jkyf/xz4+miELH/gfsdbQCCzY2iUWlRjrplDQcu7KgLoF7ZvKLBAq9zwt8RwxBCgKGSNbaCY1s2LfE00I0BsK/PVLWmMoy3aZx9i3s79hP/HD3YtR13an/rmwGZUAVnH8Wk2l15offmsxTMry/y2MTwTSq0gaiqA8bKSQomOQz3yYAAHDcdwR9VpBwY7M8kcO+hDtcq9pOfN1XWGOAgma4CFRn8dzqZbKXNFBlk/STQpzVM6HQ14xQFUgPDHrCoCjI8jnWf7uKCF33VZSVWlO2Ncs/vjf0th9VOeb63ny2EzYKmNBWxA",
+                    "Source": 6,
+                    "IsLCC": true,
+                    "IsRefundable": true,
+                    "IsPanRequiredAtBook": false,
+                    "IsPanRequiredAtTicket": false,
+                    "IsPassportRequiredAtBook": false,
+                    "IsPassportRequiredAtTicket": false,
+                    "GSTAllowed": true,
+                    "IsCouponAppilcable": true,
+                    "IsGSTMandatory": false,
+                    "AirlineRemark": "6E main.",
+                    "IsPassportFullDetailRequiredAtBook": false,
+                    "ResultFareType": "RegularFare",
+                    "Fare": {
+                        "Currency": "INR",
+                        "BaseFare": 9130,
+                        "Tax": 1356,
+                        "TaxBreakup": [
+                            {
+                                "key": "K3",
+                                "value": 0
+                            },
+                            {
+                                "key": "YQTax",
+                                "value": 0
+                            },
+                            {
+                                "key": "YR",
+                                "value": 0
+                            },
+                            {
+                                "key": "PSF",
+                                "value": 0
+                            },
+                            {
+                                "key": "UDF",
+                                "value": 0
+                            },
+                            {
+                                "key": "INTax",
+                                "value": 0
+                            },
+                            {
+                                "key": "TransactionFee",
+                                "value": 0
+                            },
+                            {
+                                "key": "OtherTaxes",
+                                "value": 0
+                            }
+                        ],
+                        "YQTax": 0,
+                        "AdditionalTxnFeeOfrd": 0,
+                        "AdditionalTxnFeePub": 0,
+                        "PGCharge": 0,
+                        "OtherCharges": 0,
+                        "ChargeBU": [
+                            {
+                                "key": "TBOMARKUP",
+                                "value": 0
+                            },
+                            {
+                                "key": "GLOBALPROCUREMENTCHARGE",
+                                "value": 0
+                            },
+                            {
+                                "key": "CONVENIENCECHARGE",
+                                "value": 0
+                            },
+                            {
+                                "key": "OTHERCHARGE",
+                                "value": 0
+                            }
+                        ],
+                        "Discount": 0,
+                        "PublishedFare": 10486,
+                        "CommissionEarned": 0,
+                        "PLBEarned": 0,
+                        "IncentiveEarned": 0,
+                        "OfferedFare": 10486,
+                        "TdsOnCommission": 0,
+                        "TdsOnPLB": 0,
+                        "TdsOnIncentive": 0,
+                        "ServiceFee": 0,
+                        "TotalBaggageCharges": 0,
+                        "TotalMealCharges": 0,
+                        "TotalSeatCharges": 0,
+                        "TotalSpecialServiceCharges": 0
+                    },
+                    "FareBreakdown": [
+                        {
+                            "Currency": "INR",
+                            "PassengerType": 1,
+                            "PassengerCount": 1,
+                            "BaseFare": 3690,
+                            "Tax": 678,
+                            "TaxBreakUp": [
+                                {
+                                    "key": "YQTax",
+                                    "value": 0
+                                },
+                                {
+                                    "key": "YR",
+                                    "value": 0
+                                }
+                            ],
+                            "YQTax": 0,
+                            "AdditionalTxnFeeOfrd": 0,
+                            "AdditionalTxnFeePub": 0,
+                            "PGCharge": 0,
+                            "SupplierReissueCharges": 0
+                        },
+                        {
+                            "Currency": "INR",
+                            "PassengerType": 2,
+                            "PassengerCount": 1,
+                            "BaseFare": 3690,
+                            "Tax": 678,
+                            "TaxBreakUp": [
+                                {
+                                    "key": "YQTax",
+                                    "value": 0
+                                },
+                                {
+                                    "key": "YR",
+                                    "value": 0
+                                }
+                            ],
+                            "YQTax": 0,
+                            "AdditionalTxnFeeOfrd": 0,
+                            "AdditionalTxnFeePub": 0,
+                            "PGCharge": 0,
+                            "SupplierReissueCharges": 0
+                        },
+                        {
+                            "Currency": "INR",
+                            "PassengerType": 3,
+                            "PassengerCount": 1,
+                            "BaseFare": 1750,
+                            "Tax": 0,
+                            "TaxBreakUp": null,
+                            "YQTax": 0,
+                            "AdditionalTxnFeeOfrd": 0,
+                            "AdditionalTxnFeePub": 0,
+                            "PGCharge": 0,
+                            "SupplierReissueCharges": 0
+                        }
+                    ],
+                    "Segments": [
+                        [
+                            {
+                                "Baggage": "15 KG",
+                                "CabinBaggage": " 7 KG",
+                                "CabinClass": 2,
+                                "SupplierFareClass": null,
+                                "TripIndicator": 1,
+                                "SegmentIndicator": 1,
+                                "Airline": {
+                                    "AirlineCode": "6E",
+                                    "AirlineName": "Indigo",
+                                    "FlightNumber": "6047",
+                                    "FareClass": "RR",
+                                    "OperatingCarrier": ""
+                                },
+                                "NoOfSeatAvailable": 2,
+                                "Origin": {
+                                    "Airport": {
+                                        "AirportCode": "DEL",
+                                        "AirportName": "Indira Gandhi Airport",
+                                        "Terminal": "1",
+                                        "CityCode": "DEL",
+                                        "CityName": "Delhi",
+                                        "CountryCode": "IN",
+                                        "CountryName": "India"
+                                    },
+                                    "DepTime": "2024-12-30T11:15:00"
+                                },
+                                "Destination": {
+                                    "Airport": {
+                                        "AirportCode": "BOM",
+                                        "AirportName": "Chhatrapati Shivaji Maharaj International Airport",
+                                        "Terminal": "2",
+                                        "CityCode": "BOM",
+                                        "CityName": "Mumbai",
+                                        "CountryCode": "IN",
+                                        "CountryName": "India"
+                                    },
+                                    "ArrTime": "2024-12-30T13:30:00"
+                                },
+                                "Duration": 135,
+                                "GroundTime": 0,
+                                "Mile": 0,
+                                "StopOver": false,
+                                "FlightInfoIndex": "",
+                                "StopPoint": "",
+                                "StopPointArrivalTime": null,
+                                "StopPointDepartureTime": null,
+                                "Craft": "321",
+                                "Remark": null,
+                                "IsETicketEligible": true,
+                                "FlightStatus": "Confirmed",
+                                "Status": "",
+                                "FareClassification": {
+                                    "Type": "Publish"
+                                }
+                            }
+                        ]
+                    ],
+                    "LastTicketDate": null,
+                    "TicketAdvisory": null,
+                    "FareRules": [
+                        {
+                            "Origin": "DEL",
+                            "Destination": "BOM",
+                            "Airline": "6E",
+                            "FareBasisCode": "R0IP",
+                            "FareRuleDetail": "",
+                            "FareRestriction": "",
+                            "FareFamilyCode": "",
+                            "FareRuleIndex": ""
+                        }
+                    ],
+                    "AirlineCode": "6E",
+                    "ValidatingAirline": "6E",
+                    "FareClassification": {
+                        "Color": "lightBlue",
+                        "Type": "Publish"
+                    }
+                }
+
+]
+]
+}
+}
+    
+
+
+ONE WAY SEARCH SAMPLE JSON
+
+{
+"EndUserIp": "192.168.10.10",
+"TokenId": "ac2751e9-4cc3-406f-b678-c947e4f57a00",
+"AdultCount": "1",
+"ChildCount": "0",
+"InfantCount": "0",
+"DirectFlight": "false",
+"OneStopFlight": "false",
+"JourneyType": "1",
+"PreferredAirlines": null,
+"Segments": [
+{
+"Origin": "DEL",
+"Destination": "BOM",
+"FlightCabinClass": "1",
+"PreferredDepartureTime": "2015-11-06T00: 00: 00",
+"PreferredArrivalTime": "2015-11-06T00: 00: 00"
+}
+        ],
+"Sources": null
+
+}
+
+
+RETURN SEARCH SAMPLE JSON
+
+{
+  "EndUserIp": "192.168.10.10",
+  "TokenId": "ac2751e9-4cc3-406f-b678-c947e4f57a00",
+  "AdultCount": "1",
+  "ChildCount": "0",
+  "InfantCount": "0",
+  "DirectFlight": "false",
+  "OneStopFlight": "false",
+  "JourneyType": "2",
+  "PreferredAirlines": null,
+  "Segments": [
+    {
+      "Origin": "DEL",
+      "Destination": "BOM",
+      "FlightCabinClass": "1",
+      "PreferredDepartureTime": "2020-11-06T00: 00: 00",
+      "PreferredArrivalTime": "2020-11-06T00: 00: 00"
+    },
+    {
+      "Origin": "BOM",
+      "Destination": "DEL",
+      "FlightCabinClass": "1",
+      "PreferredDepartureTime": "2020-11-08T00: 00: 00",
+      "PreferredArrivalTime": "2020-11-08T00: 00: 00"
+    }
+  ],
+  "Sources": null
+}
+
+
+ADVANCE  SEARCH SAMPLE JSON
+
+{
+"EndUserIp": "192.168.10.10",
+"TokenId": "ac2751e9-4cc3-406f-b678-c947e4f57a00",
+"AdultCount": "1",
+"ChildCount": "0",
+"InfantCount": "0",
+"DirectFlight": "false",
+"OneStopFlight": "false",
+"JourneyType": "4",
+"PreferredAirlines": null,
+"Segments": [
+{
+"Origin": "DEL",
+"Destination": "BOM",
+"FlightCabinClass": "1",
+"PreferredDepartureTime": "2015-11-06T00: 00: 00",
+"PreferredArrivalTime": "2015-11-06T00: 00: 00"
+}
+        ],
+"Sources": null
+
+}
+
+
+MULTICITY SEARCH SAMPLE JSON
+
+{
+  "EndUserIp": "192.168.10.10",
+  "TokenId": "ac2751e9-4cc3-406f-b678-c947e4f57a00",
+  "AdultCount": "1",
+  "ChildCount": "0",
+  "InfantCount": "0",
+  "DirectFlight": "false",
+  "OneStopFlight": "false",
+  "JourneyType": "3",
+  "PreferredAirlines": null,
+  "Segments": [
+    {
+      "Origin": "DEL",
+      "Destination": "BOM",
+      "FlightCabinClass": "1",
+      "PreferredDepartureTime": "2020-11-06T00: 00: 00",
+      "PreferredArrivalTime": "2020-11-06T00: 00: 00"
+    },
+    {
+      "Origin": "BOM",
+      "Destination": "DXB",
+      "FlightCabinClass": "1",
+      "PreferredDepartureTime": "2020-11-08T00: 00: 00",
+      "PreferredArrivalTime": "2020-11-08T00: 00: 00"
+    },
+{
+      "Origin": "DXB",
+      "Destination": "DEL",
+      "FlightCabinClass": "1",
+      "PreferredDepartureTime": "2020-11-10T00: 00: 00",
+      "PreferredArrivalTime": "2020-11-10T00: 00: 00"
+    }
+
+  ],
+  "Sources": null
+}
+
+
+
+SEARCH FAQ
+Q1. How do we use Air Search Method
+
+Solution: Search method provides availability information with the cheapest fare option available. The request includes single query. The search request contains optional field of Return Date. In case of round trip, this field should be filled with the date of return. When properly submitted, the Search Response returns the available option. Once the requested query is parsed and validated, the booking engine start searching for the best option in all possible sources. If the search is successful it will return Result object.
+
+Q2. What is difference between LCC and GDS?
+
+Solution:LCC- Low cost carrier flight and offering low fares and minimizing operational costs. Some airlines from Lcc are Indigo, SpiceJet GDS-Global Distribution System platform that allows travel agencies and other entities to access real-time information about flights, fares, availability, and make reservations across multiple airlines. Some airlines for GDS are Air India, Vistara.
+
+Q3. How to filter data for LCC and GDS?
+
+Solution: In case of GDS you have to pass Sources: ["GDS"] and in "PreferredAirlines":["AI","UK"]. In case of LCC you have to pass airline code in sources "Sources": ["6E","SG"]
+
+Q4. How to get special fare while searching?
+
+Solution: Client need to pass 'ResultFareType' node to get the special fare and below are the enums for the same-: https://api.tektravels.com/FlightAPIDocument/NewReleases.aspx ResultFareType:2(RegularFare) ResultFareType:3 (StudentFare ) ResultFareType:4 (Armed Force) ResultFareType:5 (Senior Citizen)
+1. Student is mandatory in case of 6E & SG.
+2. Senior Citizen is mandatory id's in case of Indigo airline only.
+3. AkasaAir is available only for Armed Force Fare.
+4. Indigo, SpiceJet both are available for Senior Citizen Fare.
+
+Q5. How to check flight is LCC or Non LCC?
+
+Solution: In search response you will receive node islcc:true/false. If its true that means its LCC flight.

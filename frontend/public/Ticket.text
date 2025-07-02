@@ -1,0 +1,291 @@
+icket
+This method is to be called to generate ticket for both LCCs and Non LCCs (already booked itinerary).
+
+Price verification is done before creating a booking/ ticket and PNR No. is returned in case of a successful booking
+
+In case of Price change or Time change, you will get new fare and/or new time in Ticket response with IsPriceChanged node and/or IsTimeChanged node set as ‘true’. The price comparison is to be made at the client’s end, and Book request needs to be sent again with the updated fare and/ or updated time.
+
+Also, in case of Non LCC bookings, if Passenger’s Date of Birth and Passport details are not provided in the book response, then the same needs to be provided when calling ticket method wherever applicable.
+
+If in case there is a price change at the time of ticketing then hit the ticket method again with the updated price and "IsPriceChangeAccepted" node true and the ticket would be generated with the updated price.
+
+Service URL (REST) to be used:
+http://api.tektravels.com/BookingEngineService_Air/AirService.svc/rest/Ticket
+Ticket Request for Non LCC
+Level	Element	Format	Comments	Mandatory/ Optional
+1	EndUserIp	String	IP Address of the end user	Mandatory
+2	TokenId	String	Token ID (Token Id to be echoed back from Authenticate response)	Mandatory
+3	TraceId	String	Trace Id (Trace Id to be echoed back from search response. This can be used to trace particular search/ book at TBO’s end)	Mandatory
+4	PNR	String	PNR number	Mandatory
+5	BookingId	Integer	Unique booking id	Mandatory
+6	Passport[]	List of Passenger Passport List		
+6.1	PaxId	Integer	Unique Pax id	Optional
+6.2	PassportNo	String	Passport no	Optional
+6.3	PassportExpiry	Date time	Passport expiry	Optional
+6.4	DateOfBirth	Date Time	Date of birth	Mandatory
+7	IsPriceChangeAccepted	Boolean	In Case Price has changed then this node need to passed true as acceptance for successful booking.	Optional
+Ticket Request for LCC
+Level	Element	Format	Comments	Mandatory/ Optional
+1	EndUserIp	String	IP Address of the end user	Mandatory
+2	TokenId	String	Token ID	Mandatory
+3	TraceId	String	Trace Id	Mandatory
+4	ResultIndex	String	Result Index	Mandatory
+5	Passengers[]			Mandatory
+5.1	Title	String	Title (Adult Mr/Mrs Child Miss/Mstr Infant Miss/Mstr)	Mandatory
+5.2	FirstName	String	First name	Mandatory
+5.3	LastName	String	Last name	Mandatory
+5.4	PaxType	String	Pax type (Adult = 1,Child = 2,Infant = 3)	Mandatory
+5.5	DateOfBirth	Date Time	Date of birth	Optional
+5.6	Gender	String	Gender (Male=1,Female=2)	Mandatory
+5.7	PassportNo	String	Passport no	Optional
+5.8	PassportExpiry	Date time	Passport expiry	Optional
+5.9	AddressLine1	String	Address	Mandatory
+5.10	AddressLine2	String	Address	Optional
+5.11	City	String	City	Mandatory
+5.12	CountryCode	String	Country code	Mandatory
+5.13	CountryName	String	Country name	Mandatory
+5.14	ContactNo	String	Contact no	Mandatory
+5.15	Email	String	Email	Mandatory
+5.16	IsLeadPax	Boolean	Represent the lead guest of the booking (Value True/ False)	Mandatory
+5.17	FFAirlineCode	String	FF airline code	Optional
+5.18	FFNumber	String	FF number	Optional
+5.19	GSTCompanyAddress	String	GSTCompanyAddress	Mandatory
+5.20	GSTCompanyContactNumber	String	GSTCompanyContactNumber	Mandatory
+5.21	GSTCompanyName	String	GSTCompanyName	Mandatory
+5.22	GSTNumber	String	GSTNumber	Mandatory
+5.23	GSTCompanyEmail	String	GSTCompanyEmail	Mandatory
+5.19	Fare			
+5.19.1	BaseFare	Decimal	Base fare	Mandatory
+5.19.2	Tax	Decimal	Tax	Mandatory
+5.19.3	TransactionFee	Decimal	Transaction fee	Mandatory
+5.19.4	YQTax	Decimal	Fuel Surcharge	Mandatory
+5.19.5	AdditionalTxnFeeOfrd	Decimal	Additional Transaction Fee Offered (It will always be zero)	Mandatory
+5.19.6	AdditionalTxnFeePub	Decimal	Additional Transaction Fee Published	Mandatory
+5.19.7	AirTransFee	Decimal	Air trans fee	Mandatory
+5.20	Baggage			
+5.20.1	WayType	Enumeration	Way type [NotSet = 0Segment = 1,FullJourney = 2]	
+5.20.2	Code	String	Baggage code	Mandatory
+5.20.3	Description	String	([NotSet = 0,Included = 1,Direct = 2,Imported = 3,UpGrade = 4,ImportedUpgrade = 5]In case of Included, baggage can be upgraded (if upgrade baggage option exists)And In case of Direct, baggage can't be upgraded.)	Mandatory
+5.20.4	Weight	String	Baggage weight	Mandatory
+5.20.5	Currency	String	Currency	Mandatory
+5.20.6	Price	Decimal	Baggage price	Mandatory
+5.20.7	Origin	String	String	Mandatory
+5.20.8	Destination	String	Destination	Mandatory
+5.21	MealDynamic			
+5.21.1	WayType	Enumeration	Way Type [NotSet = 0,Segment = 1FullJourney = 2]	Mandatory
+5.21.2	Code	String	Meal Code	Mandatory
+5.21.3	Description	String	([NotSet = 0,Included = 1,Direct = 2,Imported = 3,UpGrade = 4,ImportedUpgrade = 5] In case of Included, baggage can be upgraded (if upgrade baggage option exists)And In case of Direct, baggage can't be upgraded.)	Mandatory
+5.21.4	AirlineDescription	String	Meal description	Mandatory
+5.21.5	Quantity	String	Meal quantity	Mandatory
+5.21.6	Price	Decimal	Meal Price	Mandatory
+5.21.7	Currency	String	Currency	Mandatory
+5.21.8	Origin	String	Origin	Mandatory
+5.21.9	Destination	String	Destination	Mandatory
+5.21.10	Nationality	String	Nationality	Mandatory
+6	IsPriceChangeAccepted	Boolean	In Case Price has changed then this node need to passed true as acceptance for successful booking.	Optional
+Ticket Response
+Level	Element	Format	Comments	Mandatory/ Optional
+1	IsPriceChanged	Boolean	Represents whether price has changed or not	Mandatory (Value - True/ False)
+2	IsTimeChanged	Boolean	Represents whether time has changed or not	Mandatory (Value - True/ False)
+3	PNR	String	PNR number	Mandatory
+4	BookingId	Integer	Unique booking id	Mandatory
+5	SSRDenied	String	SSR denied	Mandatory
+6	SSRMessage	String	SSR message	Optional
+7	FlightItinerary			
+7.1	BookingId	Integer	Unique booking id	Mandatory
+7.2	PNR	String	PNR no	Mandatory
+7.3	IsDomestic	Boolean	Search request is for domestic or international	Mandatory
+7.4	Source	String	Airline source	Mandatory
+7.5	Origin	String	Origin	Mandatory
+7.6	Destination	String	Destination	Mandatory
+7.7	AirlineCode	String	Airline code	Mandatory
+7.8	ValidatingAirlineCode	String	Validating airline code	Mandatory
+7.9	AirlineRemarks	String	Airline remarks	Optional
+7.10	IsLCC	Boolean	Is the result for LCC or Non LCC	Mandatory
+7.11	NonRefundable	Boolean	Is the fare refundable or not	Mandatory
+7.12	FareType	String	Fare type	Mandatory
+7.13	Fare			
+7.13.1	Currency	String	Currency	Mandatory
+7.13.2	BaseFare	Decimal	Base fare	Mandatory
+7.13.3	Tax	Decimal	Total tax	Mandatory
+7.13.4	YQTax	Decimal	Fuel surcharge	Mandatory
+7.13.5	AdditionalTxnFeeOfrd	Decimal	Additional Transaction Fee Offered (It will always be zero)	Mandatory
+7.13.6	AdditionalTxnFeePub	Decimal	Additional Transaction Fee Published	Mandatory
+7.13.7	OtherCharges	String	Other Charges	Mandatory
+7.13.8	ChargeBU[]			
+7.13.8.1	TBOMarkUp	Decimal	TBO Mark-up	Mandatory
+7.13.8.2	ConvenienceCharge	Decimal	Convenience Charge	Mandatory
+7.13.8.3	OtherCharge	Decimal	Other Charge	Mandatory
+7.13.9	Discount	Decimal	Discount	Mandatory
+7.13.10	PublishedFare	Decimal	Published fare	Mandatory
+7.13.11	CommissionEarned	Decimal	Agent commission	Mandatory
+7.13.12	PLBEarned	Decimal	Performance Linked Bonus	Mandatory
+7.13.13	IncentiveEarned	Decimal	Incentive applicable	Mandatory
+7.13.14	OfferedFare	Decimal	Offerred fare	Mandatory
+7.13.15	TdsOnCommission	Decimal	TDS on commission	Mandatory
+7.13.16	TdsOnPLB	Decimal	TDS on Performance Linked Bonus	Mandatory
+7.13.17	TdsOnIncentive	Decimal	TDS on the incentive	Mandatory
+7.13.18	ServiceFee[]	Decimal	Service fee	Mandatory
+7.14	Passenger[]			
+7.14.1	PaxID[]	Integer	Unique pax id	Mandatory
+7.14.2	Title	String	Title	Mandatory
+7.14.3	FirstName	String	First Name	Mandatory
+7.14.4	LastName	String	Last Name	Mandatory
+7.14.5	PaxType	String	Pax Type	Mandatory
+7.14.6	DateOfBirth	Date Time	Date of birth	Mandatory
+7.14.7	Gender	String	Gender	Mandatory
+7.14.8	PassportNo	String	Passport no	Optional
+7.14.9	PassportExpiry	Date time	Passport expiry	Optional
+7.14.10	AddressLine1	String	Address	Mandatory
+7.14.11	AddressLine2	String	Address	Optional
+7.14.12	City	String	City	Mandatory
+7.14.13	CountryCode	String	Country Code	Mandatory
+7.14.14	CountryName	String	Country Name	Mandatory
+7.14.15	ContactNo	String	Contact No	Mandatory
+7.14.16	Email	String	Email	Mandatory
+7.14.17	IsLeadPax	Boolean	Represent the lead guest of the booking (Value - True/ False)	Mandatory
+7.14.18	FFAirlineCode	String	FF airline	Optional
+7.14.19	FFNumber	String	FF number	Optional
+7.14.20	Fare			
+7.14.20.1	Currency	String	Currency	Mandatory
+7.14.20.2	BaseFare	Decimal	Base fare	Mandatory
+7.14.20.3	Tax	Decimal	Total tax	Mandatory
+7.14.20.4	YQTax	Decimal	Fuel surcharge	Mandatory
+7.14.20.5	AdditionalTxnFeeOfrd	Decimal	Additional Transaction Fee Offered (It will always be zero)	Mandatory
+7.14.20.6	AdditionalTxnFeePub	Decimal	Additional Transaction Fee Published	Mandatory
+7.14.20.7	OtherCharges	Decimal	Other Charge	Mandatory
+7.14.20.8	ChargeBU[]			Mandatory
+7.14.20.8.1	TBOMarkUp	Decimal	TBO Mark-up	Mandatory
+7.14.20.8.2	ConvenienceCharge	Decimal	Convenience Charge	Mandatory
+7.14.20.8.3	OtherCharge	Decimal	Other Charge	Mandatory
+7.14.20.9	Discount	Decimal	The total discount amount of the booking. Will be zero for API customer.	Mandatory
+7.14.20.10	PublishedFare	Decimal	Published Fare	Mandatory
+7.14.20.11	CommissionEarned	Decimal	Agent Commission	Mandatory
+7.14.20.12	PLBEarned	Decimal	Performance Linked Bonus	Mandatory
+7.14.20.13	IncentiveEarned	Decimal	Agent Incentive	Mandatory
+7.14.20.14	OfferedFare	Decimal	Offered Fare	Mandatory
+7.14.20.15	TdsOnCommission	Decimal	TDS on the commission	Mandatory
+7.14.20.16	TdsOnPLB	Decimal	TDS on Performance Linked Bonus	Mandatory
+7.14.20.17	TdsOnIncentive	Decimal	TDS on the incentive	Mandatory
+7.14.20.18	ServiceFee	Decimal	Service Fee	Mandatory
+7.14.21	Baggage[]			
+7.14.21.1	WayType	Enumeration	Way type	Mandatory
+7.14.21.2	Code	String	Baggage code	Mandatory
+7.14.21.3	Description	String	Baggage description	Mandatory
+7.14.21.4	Weight	String	Baggage weight	Mandatory
+7.14.21.5	Currency	String	Currency	Mandatory
+7.14.21.6	Price	Decimal	Baggage price	Mandatory
+7.14.21.7	Origin	String	Origin	Mandatory
+7.14.21.8	Destination	String	Destination	Mandatory
+7.14.22	MealDynamic			
+7.14.22.1	WayType	Enumeration	Way type	Mandatory
+7.14.22.2	Code	String	Meal code	Mandatory
+7.14.22.3	Description	String	Description	Mandatory
+7.14.22.4	AirlineDescription	String	Meal description	Mandatory
+7.14.22.5	Quantity	String	Meal quantity	Mandatory
+7.14.22.6	Price	Decimal	Meal price	Mandatory
+7.14.22.7	Currency	String	Currency	Mandatory
+7.14.22.8	Origin	String	Origin	Mandatory
+7.14.22.9	Destination	String	Destination	Optional
+7.14.23	Ticket			
+7.14.23.1	TicketId	Integer	Unique ticket id	Mandatory
+7.14.23.2	TicketNumber	String	Ticket number	Mandatory
+7.14.23.3	IssueDate	Date time	Ticket issue date	Mandatory
+7.14.23.4	ValidatingAirline	String	Validating airline	Mandatory
+7.14.23.5	Remarks	String	Remarks	Mandatory
+7.14.23.6	ServiceFeeDisplayType	String	Service fee display type	Mandatory
+7.14.23.7	Status	String	Booking Status [NotSet = 0, Successful = 1, Failed = 2, OtherFare = 3, OtherClass = 4, BookedOther = 5, NotConfirmed = 6]	Mandatory
+7.14.24	SegmentAdditionalInfo			
+7.14.24.1	FareBasis	String	Fare basis	Mandatory
+7.14.24.2	NVA	Date Time	Not valid after date	Mandatory
+7.14.24.3	NVB	Date Time	Not valid before date	Mandatory
+7.14.24.4	Baggage	String	Free baggage allowance	Mandatory
+7.14.24.5	Meal	String	Meal	Mandatory
+7.15	Segments			
+7.15.1	TripIndicator	Integer	Trip indicator	Mandatory
+7.15.2	SegmentIndicator	Integer	Segment indicator	Mandatory
+7.15.3.1	AirlineCode	String	Airline code	Mandatory
+7.15.3.2	AirlineName	String	Airline name	Mandatory
+7.15.3.3	FlightNumber	String	Flight Number	Mandatory
+7.15.3.4	FareClass	String	Fare Class	Mandatory
+7.15.3.5	OperatingCarrier	String	Operating Carrier	Mandatory
+7.15.4	Origin			
+7.15.4.1	Airport			
+7.15.4.1.1	AirportCode	String	Airport Code	Mandatory
+7.15.4.1.2	AirportName	String	Airport name	Optional
+7.15.4.1.3	Terminal	String	Terminal number	Optional
+7.15.4.1.4	CityCode	String	City code	Mandatory
+7.15.4.1.5	CityName	String	City Name	Mandatory
+7.15.4.1.6	CountryCode	String	CountryCode	Mandatory
+7.15.4.1.7	CountryName	String	Country Name	Mandatory
+7.15.4.2	DepTime	Date Time	Departure time	Mandatory
+7.15.5	Destination			
+7.15.5.1	Airport			
+7.15.5.1.1	AirportCode	String	Airport Code	Mandatory
+7.15.5.1.2	AirportName	String	Airport Name	Optional
+7.15.5.1.3	Terminal	String	Terminal number	Optional
+7.15.5.1.4	CityCode	String	City code	Mandatory
+7.14.24	SegmentAdditionalInfo			
+7.14.24.1	FareBasis	String	Fare basis	Mandatory
+7.14.24.2	NVA	Date Time	Not valid after date	Mandatory
+7.14.24.3	NVB	Date Time	Not valid before date	Mandatory
+7.14.24.4	Baggage	String	Free baggage allowance	Mandatory
+7.14.24.5	Meal	String	Meal	Mandatory
+7.15	Segments			
+7.15.1	TripIndicator	Integer	Trip indicator	Mandatory
+7.15.2	SegmentIndicator	Integer	Segment indicator	Mandatory
+7.15.3.1	AirlineCode	String	Airline code	Mandatory
+7.15.3.2	AirlineName	String	Airline name	Mandatory
+7.15.3.3	FlightNumber	String	Flight Number	Mandatory
+7.15.3.4	FareClass	String	Fare Class	Mandatory
+7.15.3.5	OperatingCarrier	String	Operating Carrier	Mandatory
+7.15.4	Origin			
+7.15.4.1	Airport			
+7.15.4.1.1	AirportCode	String	Airport Code	Mandatory
+7.15.4.1.2	AirportName	String	Airport name	Optional
+7.15.4.1.3	Terminal	String	Terminal number	Optional
+7.15.4.1.4	CityCode	String	City code	Mandatory
+7.15.4.1.5	CityName	String	City Name	Mandatory
+7.15.4.1.6	CountryCode	String	CountryCode	Mandatory
+7.15.4.1.7	CountryName	String	Country Name	Mandatory
+7.15.4.2	DepTime	Date Time	Departure time	Mandatory
+7.15.5	Destination			
+7.15.5.1	Airport			
+7.15.5.1.1	AirportCode	String	Airport Code	Mandatory
+7.15.5.1.2	AirportName	String	Airport Name	Optional
+7.15.5.1.3	Terminal	String	Terminal number	Optional
+7.15.5.1.4	CityCode	String	City code	Mandatory
+7.15.5.1.5	CityName	String	City Name	Mandatory
+7.15.5.1.6	CountryCode	String	Country code	Mandatory
+7.15.5.1.7	CountryName	String	Country name	Mandatory
+7.15.5.2	ArrTime	Date Time	Arrival time	Mandatory
+7.15.6	AirlinePNR	String	Airline pnr	Optional
+7.15.7	AccumulatedDuration	Time	Accumulated duration	Optional
+7.15.8	Duration	Time	Duration	Optional
+7.15.9	GroundTime	Time	Ground time	Optional
+7.15.10	Mile	String	Miles	Optional
+7.15.11	StopOver			
+7.15.12	StopPoint	String	Stopover point	Optional
+7.15.13	StopPointArrivalTime	Date Time	Stopover arrival time	Optional
+7.15.14	StopPointDepartureTime	Date Time	Stopover departure time	Optional
+7.15.15	Craft	String	Craft	Optional
+7.15.16	IsETicketEligible	Boolean	Is E-Ticket eligible	Mandatory
+7.15.17	FlightStatus	String	Flight status	Mandatory
+7.15.18	Status	String	Flight status code	Mandatory
+7.16	FareRules	String	Fare rules	Mandatory
+7.16.1	Origin	String	Origin	Mandatory
+7.16.2	Destination	String	Destination	Mandatory
+7.16.3	Airline	String	Airline	Mandatory
+7.16.4	FareBasisCode	String	Fare basis code	Mandatory
+7.16.5	FareRuleDetail	String List	Fare rule details	Mandatory
+7.16.6	FareRestriction	String	Fare restriction	Mandatory
+7.17	InvoiceNo	Date Time	Invoice no	Mandatory
+7.18	InvoiceCreatedOn	String	Invoice created on	Mandatory
+7.19	GSTCompanyAddress	String	GSTCompanyAddress	Mandatory
+7.20	GSTCompanyContactNumber	String	GSTCompanyContactNumber	Mandatory
+7.21	GSTCompanyName	String	GSTCompanyName	Mandatory
+7.22	GSTNumber	String	GSTNumber	Mandatory
+7.23	GSTCompanyEmail	String	GSTCompanyEmail	Mandatory
+7.19	TicketStatus	Enumeration	[Failed = 0, Successful = 1, NotSaved = 2, NotCreated = 3, NotAllowed = 4, InProgress = 5, TicketeAlreadyCreated= 6, PriceChanged = 8, OtherError = 9]	Mandatory
+7.20	Message	String	Message	Optional
+8	Nationality	String	Nationality	Mandatory

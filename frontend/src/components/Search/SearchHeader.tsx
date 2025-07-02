@@ -164,23 +164,18 @@ export const SearchHeader: React.FC<SearchHeaderProps> = ({
 
     // Validate date fields based on trip type
     if (localTripType === "one-way" || localTripType === "round-trip") {
-      const departureInputValue = departureInputRef?.current?.value
-    
-      if (!searchForm.date || searchForm.date.trim() === "" || !departureInputValue) {
+      if (!searchForm.date || searchForm.date.trim() === "") {
         setValidationError("Please select a departure date")
         return
       }
     }
-    
-    if (localTripType === "round-trip") {
-      const returnInputValue = returnInputRef?.current?.value
-    
-      if (!searchForm.returnDate || searchForm.returnDate.trim() === "" || !returnInputValue) {
-        setValidationError("Please select a return date")
-        return
-      }
+
+    // Validate return date for round-trip
+    if (localTripType === "round-trip" && (!searchForm.returnDate || searchForm.returnDate.trim() === "")) {
+      setValidationError("Please select a return date")
+      return
     }
-    
+
     // Validate multi-city trips if applicable
     if (localTripType === "multi-city" && searchForm.multiCityTrips) {
       // Check each trip individually

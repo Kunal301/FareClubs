@@ -1,0 +1,556 @@
+SSR
+This method is used to obtain the online prices of Special Service Request like Excess Baggage and Meal for LCC airlines like Indigo, Spice Jet, Air Asia, Air Arabia, Fly Dubai, etc. For LCC Airlines which currently do not support online SSR requests, the SSR request will not return Excess Baggage and meal charges. To avail excess baggage and meal services, the selected baggage and meal needs to be passed in the ticket request with the applicable price. The total price deducted during ticketing would be addition of Offered Fare + Excess Baggage and Meal Charges.
+
+This method is also accessed to get available meal and seat options for Non LCC airlines. For Non LCC carriers the meal and seat options received in the SSR response are indicative only and may be added in the ticket request for availing the same. The given information is passed to the GDS/ airline and depending on the availability, the same is provided to the customer. Non LCC airlines do not provide online confirmation for the meal and seat option selected by the customer.
+
+NOTE : In case of Fly Dubai and all the International LCC, the free baggage should be added from the SSR response to the ticket request then only you will be able to to avail yourself with the benefit. If in case the free baggage is not selected from SSR response with Price node 0 then no free or default baggage would be provided from the airline end. For Ex : 20 kg, 30 kg and 40 kg baggage are included in the fare only until and unless you will not select the this baggage in the ticket request you will not be able to avail yourself with the same.
+
+NOTE : In case of return sector, if you need to have baggage only for one segment in that case you need to add both the objects for inbound and outbound in an array format.
+
+Service URL (REST) to be used:
+http://api.tektravels.com/BookingEngineService_Air/AirService.svc/rest/SSR
+SSR Request
+Level	Element	Format	Comments	Mandatory/ Optional
+1	EndUserIp	String	IP Address of the end user	Mandatory
+2	TokenId	String	Token ID	Mandatory(Token Id to be echoed back from Authenticate response)
+3	TraceId	String	Trace Id	Mandatory(Trace Id to be echoed back from search response. This can be used to trace particular search/ book at TBO’s end)
+4	ResultIndex	String	Result Index	Mandatory
+SSR Response For LCC
+Level	Element	Format	Comments	Mandatory/ Optional
+1	TraceId	String	Trace Id	Mandatory
+2	ResponseStatus	String	Response status	Mandatory[NotSet = 0,Successfull = 1,Failed = 2,InValidRequest = 3,InValidSession = 4,InValidCredentials = 5]
+3	Baggage[]			
+3.1	WayType	Integer	Way type	Mandatory[NotSet = 0Segment = 1FullJourney = 2]
+3.2	Code	String	Baggage code	Mandatory
+3.3	Weight	String	Baggage weight	Mandatory
+3.4	Currency	String	Currency	Mandatory
+3.5	Price	Decimal	Baggage price	Mandatory
+3.6	Origin	String	Origin	Mandatory
+3.7	Destination	String	Destination	Mandatory
+3.8	AirlineCode	String	Airline Code	Mandatory
+3.9	FlightNumber	String	Flight Number	Mandatory
+3.10	Description	String	Description	Mandatory[NotSet = 0,Included = 1,Direct = 2(Purchase),Imported = 3,UpGrade = 4ImportedUpgrade = 5]In case of Included, baggage can be upgraded (if upgrade baggage option exists)And In case of Direct, baggage can't be upgraded.
+3.11	Text	String	Detailed Description	30 KG INTL Connecting Flights Baggage
+4	MealDynamic[]			
+4.1	WayType	String	Way Type	Mandatory[Segment = 1,FullJourney = 2]
+4.2	Code	String	Meal Code	Mandatory
+4.3	Description	String	Description	Mandatory[Included = 1 (The fare includes the Meal), Direct = 2(The Meal charges are added while making the ticket), Imported = 3,(Meal charges are added while importing the ticket.)]
+4.4	AirlineDescription	String	Meal description	Mandatory
+4.5	Quantity	String	Meal quantity	Mandatory
+4.6	Price	Decimal	Meal Price	Mandatory
+4.7	Currency	String	Currency	Mandatory
+4.8	Origin	String	String	Mandatory
+4.9	Destination	String	Destination	Mandatory
+4.10	AirlineCode	String	Airline Code	Mandatory
+4.11	FlightNumber	String	Flight Number	Mandatory
+5	SeatDynamic[]			
+5.1	SegmentSeat[]			Mandatory
+5.2	RowSeats[]			
+5.3	Seats[]			
+5.3.1	AirlineCode	String	Airline Code	Mandatory
+5.3.2	FlightNumber	String	Flight Number	Mandatory
+5.3.3	CraftType	String	Craft Type Eg A320	Mandatory
+5.3.4	Origin	String	String	Mandatory
+5.3.5	Destination	String	Destination	Mandatory
+5.3.6	AvailablityType	String	SeatAvailalblityType	Mandatory [Notset = 0, Open = 1, Reserved = 3, Blocked = 4, NoSeatAtThisLocation = 5]
+5.3.7	Description	String		Mandatory[Included = 1 (The fare includes the Seat), Purchase = 2 (The Seat charges are added while making the ticket)]
+5.3.8	Code	String	Seat code	Mandatory
+5.3.9	RowNo	String	Row No of Seat	Mandatory
+5.3.10	SeatNo	String	SeatNo	Mandatory
+5.3.11	SeatType	String	Seat Type	Mandatory[Window = 1,Aisle = 2,Middle = 3]
+5.3.12	SeatWayType	String	SeatWayType	Mandatory[Segment = 1,FullJourney = 2]
+5.3.13	Compartment	String	Compartment	Mandatory[Compartment1 = 1, Compartment2 = 2, Compartment3 = 3 etc]
+5.3.14	Deck	String	Deck	Mandatory[Deck1 = 1,Deck2 = 2,Deck3 = 3]
+5.3.15	Currency	String	Currency	Mandatory
+5.3.13	Price	Decimal	Seat Price	Mandatory
+6	Error			
+6.1	ErrorCode	Integer	Code corresponding to the Error	Mandatory
+6.2	ErrorMessage	String	Contains error message	Mandatory(Will contain error description corresponding to ErrorCode. Error Message would be blank in case ErrorCode=0)
+SSR Response For Non LCC
+Level	Element	Format	Comments	Mandatory/ Optional
+1	TraceId	String	Trace Id	Mandatory(Trace Id to be echoed back in further requests)
+2	ResponseStatus	String	Response status	Mandatory[NotSet = 0,Successfull = 1,Failed = 2,InValidRequest = 3,InValidSession = 4,InValidCredentials = 5]
+3	SeatPreference			
+3.1	Code	String	Seat code	Mandatory
+3.2	Description	String	Seat description	Mandatory
+4	Meal			
+4.1	Code	String	Meal code	Mandatory
+4.2	Description	String	Meal description	Mandatory
+5	Error			
+5.1	ErrorCode	Integer	Code corresponding to the Error	Mandatory
+5.2	ErrorMessage	String	Contains error message	Mandatory(Will contain error description corresponding to ErrorCode. Error Message would be blank in case ErrorCode=0)
+
+
+
+SSR SAMPLE JSON
+
+SSR Request
+{
+"EndUserIp": "192.168.5.56",
+"TokenId": "ac2751e9-4cc3-406f-b678-c947e4f57a00",
+"TraceId": "f140170f-2b71-4b51-9cec-423a8f0bfef3",
+"ResultIndex": "OB2[TBO]ZJfnrNr3lGdOyRzztpRBmpqAnpA8mmd12UtfkktuuMcRXXF+7PK+/bnF1gS0v+UoWfYG"
+}
+    
+        SSR Response for LCC
+{
+  "Response": {
+    "ResponseStatus": 1,
+    "Error": {
+      "ErrorCode": 0,
+      "ErrorMessage": ""
+    },
+    "TraceId": "f140170f-2b71-4b51-9cec-423a8f0bfef3",
+    "Baggage": [
+      [
+        {
+                    "AirlineCode": "6E",
+                    "FlightNumber": "6047",
+                    "WayType": 2,
+                    "Code": "NoBaggage",
+                    "Description": 2,
+                    "Weight": 0,
+                    "Currency": "INR",
+                    "Price": 0,
+                    "Origin": "DEL",
+                    "Destination": "BOM"
+                },
+                {
+                    "AirlineCode": "6E",
+                    "FlightNumber": "6047",
+                    "WayType": 2,
+                    "Code": "XBPA",
+                    "Description": 2,
+                    "Weight": 5,
+                    "Currency": "INR",
+                    "Price": 2525,
+                    "Origin": "DEL",
+                    "Destination": "BOM"
+                },
+                {
+                    "AirlineCode": "6E",
+                    "FlightNumber": "6047",
+                    "WayType": 2,
+                    "Code": "XBPB",
+                    "Description": 2,
+                    "Weight": 10,
+                    "Currency": "INR",
+                    "Price": 11385,
+                    "Origin": "DEL",
+                    "Destination": "BOM"
+                },
+                {
+                    "AirlineCode": "6E",
+                    "FlightNumber": "6047",
+                    "WayType": 2,
+                    "Code": "XBPC",
+                    "Description": 2,
+                    "Weight": 15,
+                    "Currency": "INR",
+                    "Price": 7200,
+                    "Origin": "DEL",
+                    "Destination": "BOM"
+                },
+                {
+                    "AirlineCode": "6E",
+                    "FlightNumber": "6047",
+                    "WayType": 2,
+                    "Code": "XBPD",
+                    "Description": 2,
+                    "Weight": 30,
+                    "Currency": "INR",
+                    "Price": 14400,
+                    "Origin": "DEL",
+                    "Destination": "BOM"
+                }
+            ]
+        ],
+        "MealDynamic": [
+            [
+                {
+                    "AirlineCode": "6E",
+                    "FlightNumber": "6047",
+                    "WayType": 2,
+                    "Code": "NoMeal",
+                    "Description": 2,
+                    "AirlineDescription": "",
+                    "Quantity": 0,
+                    "Currency": "INR",
+                    "Price": 0,
+                    "Origin": "DEL",
+                    "Destination": "BOM"
+                },
+                {
+                    "AirlineCode": "6E",
+                    "FlightNumber": "6047",
+                    "WayType": 2,
+                    "Code": "TCSW",
+                    "Description": 2,
+                    "AirlineDescription": "Tomato Cucumber Cheese Lettuce Sandwich Combo",
+                    "Quantity": 1,
+                    "Currency": "INR",
+                    "Price": 400,
+                    "Origin": "DEL",
+                    "Destination": "BOM"
+                },
+                {
+                    "AirlineCode": "6E",
+                    "FlightNumber": "6047",
+                    "WayType": 2,
+                    "Code": "PTSW",
+                    "Description": 2,
+                    "AirlineDescription": "Paneer Tikka Sandwich Combo",
+                    "Quantity": 1,
+                    "Currency": "INR",
+                    "Price": 500,
+                    "Origin": "DEL",
+                    "Destination": "BOM"
+                },
+                {
+                    "AirlineCode": "6E",
+                    "FlightNumber": "6047",
+                    "WayType": 2,
+                    "Code": "CJSW",
+                    "Description": 2,
+                    "AirlineDescription": "Chicken Tikka Sandwich ombo",
+                    "Quantity": 1,
+                    "Currency": "INR",
+                    "Price": 500,
+                    "Origin": "DEL",
+                    "Destination": "BOM"
+                }
+            ]
+        ],
+    "SeatDynamic": [
+      {
+        "SegmentSeat": [
+          {
+            "RowSeats": [
+              {
+                "Seats": [
+                  {
+                    "AirlineCode": "6E",
+                    "FlightNumber": "23",
+                    "CraftType": "A320",
+                    "Origin": "DEL",
+                    "Destination": "DXB",
+                    "AvailablityType": 0,
+                    "Description": 2,
+                    "Code": "NoSeat",
+                    "RowNo": "0",
+                    "SeatNo": null,
+                    "SeatType": 0,
+                    "SeatWayType": 2,
+                    "Compartment": 0,
+                    "Deck": 0,
+                    "Currency": "INR",
+                    "Price": 0
+                  }
+                ]
+              },
+              {
+                "Seats": [
+                  {
+                                        "AirlineCode": "6E",
+                                        "FlightNumber": "6047",
+                                        "CraftType": "A321-220",
+                                        "Origin": "DEL",
+                                        "Destination": "BOM",
+                                        "AvailablityType": 0,
+                                        "Description": 2,
+                                        "Code": "NoSeat",
+                                        "RowNo": "0",
+                                        "SeatNo": null,
+                                        "SeatType": 0,
+                                        "SeatWayType": 2,
+                                        "Compartment": 0,
+                                        "Deck": 0,
+                                        "Currency": "INR",
+                                        "Price": 0
+                                    }
+                                ]
+                            },
+                            {
+                                "Seats": [
+                                    {
+                                        "AirlineCode": "6E",
+                                        "FlightNumber": "6047",
+                                        "CraftType": "A321-220",
+                                        "Origin": "DEL",
+                                        "Destination": "BOM",
+                                        "AvailablityType": 3,
+                                        "Description": 2,
+                                        "Code": "1A",
+                                        "RowNo": "1",
+                                        "SeatNo": "A",
+                                        "SeatType": 1,
+                                        "SeatWayType": 2,
+                                        "Compartment": 1,
+                                        "Deck": 1,
+                                        "Currency": "INR",
+                                        "Price": 3500
+                                    },
+                                    {
+                                        "AirlineCode": "6E",
+                                        "FlightNumber": "6047",
+                                        "CraftType": "A321-220",
+                                        "Origin": "DEL",
+                                        "Destination": "BOM",
+                                        "AvailablityType": 3,
+                                        "Description": 2,
+                                        "Code": "1C",
+                                        "RowNo": "1",
+                                        "SeatNo": "C",
+                                        "SeatType": 2,
+                                        "SeatWayType": 2,
+                                        "Compartment": 1,
+                                        "Deck": 1,
+                                        "Currency": "INR",
+                                        "Price": 3500
+                                    }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ], 
+
+	"SpecialServices": [
+            {
+                "SegmentSpecialService": [
+                    {
+                        "SSRService": [
+                            {
+                                "Origin": "DEL",
+                                "Destination": "BOM",
+                                "DepartureTime": "2024-12-30T11:15:00",
+                                "AirlineCode": "6E",
+                                "FlightNumber": "6047",
+                                "Code": "FFWD",
+                                "ServiceType": 3,
+                                "Text": "Priority checkin is allowed",
+                                "WayType": 4,
+                                "Currency": "INR",
+                                "Price": 600
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}
+        
+    
+         Response for NON LCC
+{"Response": {
+"Error": {
+"ErrorCode": 0,
+"ErrorMessage": ""
+},
+"Meal": [
+{
+"Code": "AVML",
+"Description": "Asian - Vegetarian"
+},
+{
+"Code": "BBML",
+"Description": "Baby/Infant Food"
+        },
+{
+"Code": "BLML",
+"Description": "Bland"
+},
+{
+        "Code": "CHML",
+"Description": "Child Food"
+},
+{
+"Code": "DBML",
+"Description": "Diabetic"
+},
+{
+"Code": "FPML",
+"Description": "Fruit Platter"
+},
+{
+"Code": "GFML",
+"Description": "Gluten Free"
+        },
+{
+"Code": "HFML",
+"Description": "High Fiber"
+},
+{
+"Code": "HNML",
+"Description": "Hindu - Non Veg"
+},
+{
+"Code": "KSML",
+        "Description": "Kosher"
+},
+{
+"Code": "LCML",
+"Description": "Low Calorie"
+},
+{
+"Code": "LFML",
+"Description": "Low Cholesterol/Fat"
+},
+{
+"Code": "LPML",
+"Description": "Low Protein"
+},
+{
+"Code": "LSML",
+        "Description": "Low Sodium/No Salt"
+},
+{
+"Code": "MOML",
+"Description": "Moslem"
+},
+{
+"Code": "NLML",
+"Description": "Non Lactose"
+        },
+{
+"Code": "ORML",
+"Description": "Oriental"
+},
+{
+"Code": "PRML",
+"Description": "Low Purin"
+},
+{
+"Code": "RVML",
+"Description": "Raw Vegetarian"
+},
+{
+"Code": "SFML",
+"Description": "Seafood"
+        },
+{
+"Code": "SPML",
+"Description": "Special Meal"
+},
+{
+"Code": "VGML",
+"Description": "Veg/Non Dairy"
+},
+        {
+"Code": "VJML",
+"Description": "Vegetarian Jain"
+},
+{
+"Code": "VLML",
+"Description": "Veg/Milk/Eggs"
+},
+{
+"Code": "VOML",
+"Description": "Vegetarian Oriental"
+}
+],
+"ResponseStatus": 1,
+"SeatPreference": [
+        {
+"Code": "A",
+"Description": "Aisle"
+}, {
+"Code": "W",
+"Description": "Window"
+}
+],
+"TraceId": "2aa52fe7-705f-40a2-896e-5384c0c0db06"
+}}
+
+    
+    Air Amendment
+Method Structure
+
+Please consider below points for clarification:
+
+Air Amendment is to buy baggage, meal or seat after Ticket is created. As of now special service is not included in amendment.
+If baggage is already added for a specific pax while booking the PNR then baggage for the same pax can’t be bought through air amendment.
+As of now air amendment is only available for LCC carriers i.e. Indigo, Spice jet, Akasa, AirIndiaExpress, AirAsia, Jazeera and FlyDubai.
+Air Amendment can be done as many as times you want after ticketing.
+In Amendment, Invoice will be generated per passenger.
+If meal and baggage is bought in amendment of a passenger at the same time then the invoice will be the same for both, but if meal and baggage is bought for the same passenger but in different time then invoice of them will be different.
+
+
+JSON
+
+Service URL (REST) to be used:
+http://api.tektravels.com/BookingEngineService_Air/AirService.svc/rest/SSR
+
+
+SSR Request: 
+{
+"EndUserIp": "192.168.11.195",
+"TokenId": "XXXXXXXXXXXXXXXXXXXXXXXXXX", 🡪 (Current day’s Token Value)
+"BookingId": "XXXXXXX" 🡪 (Booking ID of the PNR which is already created)
+}
+
+SSR Response:
+
+
+Service URL (REST) to be used:
+http://api.tektravels.com/BookingEngineService_Air/AirService.svc/rest/TicketReIssue
+
+
+Ticket ReIssue Request: 
+{
+"EndUserIp": "192.168.11.195",
+"TokenId": "381931f7-afcb-4e56-a5b5-abb6889844c7",
+"TraceId": "bc6b66e9-90c1-40e3-b9e7-577421e22aaa",
+"BookingId": 1599626,
+"SSR": [
+{
+"PaxId": 2587823, (PassengerID of the passenger for whom SSR needs to be bought)
+"Baggage": [ (BaggageArray: One of the available baggageoptions,provided in the SSR response)
+{
+"AirlineCode": "SG",
+"FlightNumber": "11",
+"WayType": 2,
+"Code": "EB10",
+"Description": 2,
+"Weight": 10,
+"Currency": "INR",
+"Price": 4950,
+"Origin": "DEL",
+"Destination": "DXB"
+}
+] } ] }
+
+
+Ticket ReIssue Response:
+
+
+Nodes that were earlier received in Ticket () response will be received in this response also such as PNR, Booking ID, Segment, Fare Details,       Passenger Details etc.
+In this response, Invoice array will be received which will have all the invoices.
+Invoices will be generated per passenger at a time, if we go for an amendment for the second time then the second time also invoices will       be generated.
+
+
+
+In this response, Booking History array will be received which will have all details as provided in TBO portal.
+
+
+
+SSR charges will also be received.
+
+
+
+In Segment Additional Info Array, All the SSR that are bought will be provided, Baggage before pipe is free baggage provided by airline and       baggage after pipe is the purchased one.
+
+
+
+In case of LCC in EMD number nodes, PNR will be received.
+Invoice Id is the same that is received in the Invoice array for the same Amendment.
+
+
+
+
+SR FAQ
+How to use SSR method in air API
+
+Solution:This method is used to obtain the online prices of Special Service Request like Excess Baggage and Meal for LCC airlines like Indigo, Spice Jet, Air Asia, Air Arabia, Fly Dubai, etc. For LCC Airlines which currently do not support online SSR requests, the SSR request will not return Excess Baggage and meal charges. To avail excess baggage and meal services, the selected baggage and meal needs to be passed in the ticket request with the applicable price. The total price deducted during ticketing would be addition of Offered Fare + Excess Baggage and Meal Charges. This method is also accessed to get available meal and seat options for Non LCC airlines. For Non LCC carriers the meal and seat options received in the SSR response are indicative only and may be added in the ticket request for availing the same. The givenâ€¯information is passed to the GDS/ airline and depending on the availability, the same is provided to the customer. Non LCC airlines do not provide online confirmation for the meal and seat option selected by the customer.

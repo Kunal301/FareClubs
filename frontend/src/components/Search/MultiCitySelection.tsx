@@ -79,7 +79,8 @@ const adaptFlight = (flight: any): FlightOption => {
       }
     }
 
-    const segment = flight.Segments[0][0]
+    const firstSegment = flight.Segments[0][0]
+    const lastSegment = flight.Segments[0][flight.Segments[0].length - 1] // Get the last segment for the final destination
 
     // Ensure we're getting the correct price
     let price = 0
@@ -95,13 +96,13 @@ const adaptFlight = (flight: any): FlightOption => {
     return {
       ResultIndex: flight.ResultIndex,
       AirlineCode: flight.AirlineCode,
-      AirlineName: segment.Airline.AirlineName,
-      FlightNumber: segment.Airline.FlightNumber,
-      DepartureTime: segment.Origin.DepTime,
-      ArrivalTime: segment.Destination.ArrTime,
-      DepartureAirport: segment.Origin.Airport.AirportCode,
-      ArrivalAirport: segment.Destination.Airport.AirportCode,
-      Duration: segment.Duration,
+      AirlineName: firstSegment.Airline.AirlineName,
+      FlightNumber: firstSegment.Airline.FlightNumber,
+      DepartureTime: firstSegment.Origin.DepTime,
+      ArrivalTime: lastSegment.Destination.ArrTime, // Use the arrival time of the last segment
+      DepartureAirport: firstSegment.Origin.Airport.AirportCode,
+      ArrivalAirport: lastSegment.Destination.Airport.AirportCode, // THIS IS THE FIX: Use the destination of the last segment
+      Duration: firstSegment.Duration, // This might need to be the total duration of all segments if not already aggregated by API
       Price: price,
       IsNonStop: flight.Segments[0].length === 1,
       Segments: flight.Segments, // Store the original segments data
@@ -317,10 +318,6 @@ const MultiCitySelectionView: React.FC<MultiCitySelectionViewProps> = ({
     newSelectedFlights[segmentIndex] = flightId
     setSelectedFlights(newSelectedFlights)
 
-    // Log the selection for debugging
-    console.log(`Selected flight ${flightId} for segment ${segmentIndex}`)
-    console.log("Current selections:", newSelectedFlights)
-
     // If this is the last segment, don't automatically move to the next tab
     if (segmentIndex < multiCityFlights.length - 1) {
       setActiveTab(segmentIndex + 1)
@@ -329,32 +326,21 @@ const MultiCitySelectionView: React.FC<MultiCitySelectionViewProps> = ({
 
   const handleBookNow = () => {
     // Check if all segments have a selected flight
-    const allSegmentsSelected = selectedFlights.every((id, index) => {
-      // Only check segments that have flights available
-      if (multiCityFlights[index] && multiCityFlights[index].length > 0) {
-        return id !== ""
-      }
-      // Skip validation for segments with no flights
-      return true
-    })
+    const allSegmentsSelected = selectedFlights.every((id) => id !== "")
 
     if (allSegmentsSelected) {
-      // Filter out empty selections (for segments with no flights)
-      const validSelections = selectedFlights.filter((id) => id !== "")
+      // Check if any segments have no flights available
+      const hasEmptySegments = multiCityFlights.some((segment) => segment.length === 0)
 
-      if (validSelections.length === 0) {
-        alert("Please select at least one flight before booking")
+      if (hasEmptySegments) {
+        alert("Some segments have no available flights. Please modify your search criteria.")
         return
       }
 
-      console.log("Booking flights with IDs:", validSelections)
-      onBookFlight(validSelections)
+      onBookFlight(selectedFlights)
     } else {
       // Find the first segment without a selection and switch to it
-      const missingSegmentIndex = selectedFlights.findIndex((id, index) => {
-        return id === "" && multiCityFlights[index] && multiCityFlights[index].length > 0
-      })
-
+      const missingSegmentIndex = selectedFlights.findIndex((id) => id === "")
       if (missingSegmentIndex !== -1) {
         setActiveTab(missingSegmentIndex)
         alert("Please select a flight for all segments before booking")
