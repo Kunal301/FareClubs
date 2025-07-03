@@ -7,7 +7,7 @@ import airportRoutes from "./routes/airportRoutes.js"
 const app = express()
 app.use(
   cors({
-    origin: "https://fareclubs-flightengine.onrender.com", // Allow requests from your React app
+    origin: "https://fareclubs-flightengine.onrender.com", 
     credentials: true,
   }),
 )
