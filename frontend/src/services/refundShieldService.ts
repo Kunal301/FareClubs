@@ -7,8 +7,7 @@ const REFUND_SHIELD_API_URL = {
 }
 
 // Update the API key handling to be more robust
-const API_KEY =
-  process.env.REACT_APP_REFUND_SHIELD_API_KEY || process.env.REFUND_SHIELD_API_KEY || "d4fe14939b4a5653444bc8975d457630"
+const API_KEY = process.env.REACT_APP_REFUND_SHIELD_API_KEY || process.env.REFUND_SHIELD_API_KEY
 const ENVIRONMENT = process.env.NODE_ENV === "production" ? "production" : "sandbox"
 
 // Types for Refund Shield API

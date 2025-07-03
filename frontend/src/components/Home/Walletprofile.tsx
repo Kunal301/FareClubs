@@ -115,8 +115,8 @@ const WalletProfile = () => {
     // Close the dropdown
     setIsDropdownOpen(false)
 
-    // Use window.location.href for a hard redirect instead of navigate
-    window.location.href = "/login"
+    // Use navigate for client-side routing instead of window.location.href
+    navigate("/login")
   }
 
   const addNewProfile = () => {
@@ -186,4 +186,3 @@ const WalletProfile = () => {
 }
 
 export default WalletProfile
-
