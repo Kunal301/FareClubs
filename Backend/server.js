@@ -25,8 +25,8 @@ mongoose
 // Use airport routes
 app.use("/api/airports", airportRoutes)
 
-const SHARED_API_BASE_URL = "http://Sharedapi.tektravels.com/SharedData.svc/rest"
-const AIR_API_BASE_URL = "http://api.tektravels.com/BookingEngineService_Air/AirService.svc/rest"
+const SHARED_API_BASE_URL = "https://Sharedapi.tektravels.com/SharedData.svc/rest"
+const AIR_API_BASE_URL = "https://api.tektravels.com/BookingEngineService_Air/AirService.svc/rest"
 
 // Authentication endpoint
 app.post("/api/auth", async (req, res) => {
