@@ -47,7 +47,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       const endUserIp = "192.168.1.1" // This should be the actual user's IP in production
 
       const response = await axios.post(
-        "http://Sharedapi.tektravels.com/SharedData.svc/rest/Authenticate",
+        "https://Sharedapi.tektravels.com/SharedData.svc/rest/Authenticate",
         {
           ClientId: "ApiIntegrationNew",
           UserName: username,

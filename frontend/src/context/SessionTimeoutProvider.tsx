@@ -60,7 +60,7 @@ export const SessionTimeoutProvider: React.FC<SessionTimeoutProviderProps> = ({ 
 
         // Call logout API
         const response = await axios.post(
-          "http://Sharedapi.tektravels.com/SharedData.svc/rest/Logout",
+          "https://Sharedapi.tektravels.com/SharedData.svc/rest/Logout",
           {
             ClientId: "ApiIntegrationNew",
             EndUserIp: "192.168.1.1", // This should be the actual user's IP in production
