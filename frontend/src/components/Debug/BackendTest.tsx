@@ -14,7 +14,7 @@ const BackendTest: React.FC = () => {
     setError(null)
 
     try {
-      const response = await axios.get("http://localhost:5000/health")
+      const response = await axios.get("https://fareclubs.onrender.com/health")
       setStatus(`Connected! Server time: ${response.data.timestamp}`)
     } catch (err) {
       console.error("Backend connection error:", err)

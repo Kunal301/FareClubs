@@ -24,7 +24,7 @@ interface CityPair {
 }
 
 // Define the base URL for the backend API using the existing environment variable
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000" // Fallback for local development
+const API_BASE_URL = process.env.REACT_APP_API_URL || "https://fareclubs.onrender.com" // Fallback for local development
 
 const Search: React.FC<SearchProps> = ({ sessionId }) => {
   const navigate = useNavigate()

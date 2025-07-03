@@ -196,7 +196,7 @@ export const getFareQuote = async (
   try {
     const response = await axios.post<FareQuoteResponse>(
       // Specify response type for axios
-      "http://localhost:5000/api/farequote",
+      "https://fareclubs.onrender.com/api/farequote",
       {
         EndUserIp: "192.168.10.10", // This should be dynamically determined in production
         TokenId: tokenId,
@@ -241,7 +241,7 @@ export const getFareRule = async (tokenId: string, traceId: string, resultIndex:
   try {
     const response = await axios.post<any>(
       // Specify FareRuleResponse type if available
-      "http://localhost:5000/api/farerule",
+      "https://fareclubs.onrender.com/api/farerule",
       {
         EndUserIp: "192.168.10.10", // This should be dynamically determined in production
         TokenId: tokenId,

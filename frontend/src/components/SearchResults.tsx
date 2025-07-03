@@ -586,7 +586,7 @@ const SearchResults: React.FC = () => {
 
       console.log("Making API request with data:", JSON.stringify(requestData, null, 2))
 
-      const response = await axios.post("http://localhost:5000/api/search", requestData, {
+      const response = await axios.post("https://fareclubs.onrender.com/api/search", requestData, {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -819,7 +819,7 @@ const SearchResults: React.FC = () => {
       console.error("Error in searchFlights:", err)
       if (axios.isAxiosError(err)) {
         if (err.code === "ERR_NETWORK") {
-          setError("Network error: Please check if the backend server is running at http://localhost:5000")
+          setError("Network error: Please check if the backend server is running at https://fareclubs.onrender.com")
         } else {
           setError(`Failed to fetch results: ${err.message}. Please try again.`)
         }

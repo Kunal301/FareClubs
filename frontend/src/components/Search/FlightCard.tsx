@@ -283,7 +283,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
       console.error("FareQuote error:", error)
       if (axios.isAxiosError(error)) {
         if (error.code === "ERR_NETWORK") {
-          setError("Network error: Please check if the backend server is running at http://localhost:5000")
+          setError("Network error: Please check if the backend server is running at https://fareclubs.onrender.com")
         } else {
           setError(`Failed to get fare quote: ${error.message}. Please try again.`)
         }

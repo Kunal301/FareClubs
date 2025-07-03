@@ -12,7 +12,7 @@ export const getSSROptions = async (tokenId: string, traceId: string, resultInde
     // Direct call to SSR API with the provided ResultIndex
     // The component will handle refreshing the session and getting a valid ResultIndex
     const response = await axios.post(
-      "http://localhost:5000/api/ssr",
+      "https://fareclubs.onrender.com/api/ssr",
       {
         EndUserIp: "192.168.10.10", // This should be dynamically determined in production
         TokenId: tokenId,
@@ -44,7 +44,7 @@ export const getSSROptions = async (tokenId: string, traceId: string, resultInde
 export const addSSRToBooking = async (tokenId: string, bookingId: string, ssrOptions: any) => {
   try {
     const response = await axios.post(
-      "http://localhost:5000/api/add-ssr",
+      "https://fareclubs.onrender.com/api/add-ssr",
       {
         EndUserIp: "192.168.10.10",
         TokenId: tokenId,

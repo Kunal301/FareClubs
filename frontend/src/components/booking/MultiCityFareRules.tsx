@@ -108,7 +108,7 @@ const MultiCityFareRules: React.FC<MultiCityFareRulesProps> = ({
       })
 
       // Use API_BASE_URL environment variable if available, otherwise fallback to localhost
-      const apiBaseUrl = process.env.API_BASE_URL || "http://localhost:5000"
+      const apiBaseUrl = process.env.API_BASE_URL || "https://fareclubs.onrender.com"
 
       const response = await axios.post(
         `${apiBaseUrl}/api/farerule`,
@@ -253,7 +253,7 @@ const MultiCityFareRules: React.FC<MultiCityFareRulesProps> = ({
 
       if (axios.isAxiosError(error)) {
         if (error.code === "ERR_NETWORK") {
-          const apiBaseUrl = process.env.API_BASE_URL || "http://localhost:5000"
+          const apiBaseUrl = process.env.API_BASE_URL || "https://fareclubs.onrender.com"
           setError(`Network error: Please check if the backend server is running at ${apiBaseUrl}`)
         } else if (error.response) {
           const errorMessage = error.response.data?.Description || error.message

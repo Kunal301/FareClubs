@@ -170,7 +170,7 @@ export const createBooking = async (bookRequest: BookRequest): Promise<BookRespo
   try {
     console.log("Sending booking request:", JSON.stringify(bookRequest, null, 2))
 
-    const response = await axios.post("http://localhost:5000/api/book", bookRequest, {
+    const response = await axios.post("https://fareclubs.onrender.com/api/book", bookRequest, {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",

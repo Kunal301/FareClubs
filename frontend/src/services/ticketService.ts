@@ -267,7 +267,7 @@ export enum TicketStatus {
  */
 export const issueNonLCCTicket = async (ticketRequest: NonLCCTicketRequest): Promise<TicketResponse> => {
   try {
-    const response = await axios.post("http://localhost:5000/api/air/ticket", ticketRequest, {
+    const response = await axios.post("https://fareclubs.onrender.com/api/air/ticket", ticketRequest, {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -291,7 +291,7 @@ export const issueLCCTicket = async (ticketRequest: LCCTicketRequest): Promise<T
     console.log("Sending LCC ticket request:", JSON.stringify(ticketRequest, null, 2))
 
     // Use the Ticket endpoint directly for LCC flights
-    const response = await axios.post("http://localhost:5000/api/air/ticket", ticketRequest, {
+    const response = await axios.post("https://fareclubs.onrender.com/api/air/ticket", ticketRequest, {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -578,7 +578,7 @@ export const generatePDFTicket = async (ticketResponse: TicketResponse): Promise
     }
 
     const response = await axios.post(
-      "http://localhost:5000/api/air/generate-ticket-pdf",
+      "https://fareclubs.onrender.com/api/air/generate-ticket-pdf",
       { ticketData: ticketResponse },
       {
         headers: {

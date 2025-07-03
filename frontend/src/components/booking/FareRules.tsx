@@ -48,7 +48,7 @@ const FareRules: React.FC<FareRulesProps> = ({ tokenId, traceId, resultIndex }) 
       console.log("Fetching fare rules with params:", { tokenId, traceId: apiTraceId, resultIndex })
 
       const response = await axios.post(
-        "http://localhost:5000/api/farerule",
+        "https://fareclubs.onrender.com/api/farerule",
         {
           EndUserIp: "192.168.10.10", // This should be dynamically determined in production
           TokenId: tokenId, // Use the original tokenId
@@ -170,7 +170,7 @@ const FareRules: React.FC<FareRulesProps> = ({ tokenId, traceId, resultIndex }) 
       console.error("Error fetching fare rules:", error)
       if (axios.isAxiosError(error)) {
         if (error.code === "ERR_NETWORK") {
-          setError("Network error: Please check if the backend server is running at http://localhost:5000")
+          setError("Network error: Please check if the backend server is running at https://fareclubs.onrender.com")
         } else if (error.response) {
           setError(`Failed to fetch fare rules: ${error.response.data?.Description || error.message}`)
         } else {
