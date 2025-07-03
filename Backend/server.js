@@ -7,7 +7,7 @@ import airportRoutes from "./routes/airportRoutes.js"
 const app = express()
 app.use(
   cors({
-    origin: "https://fareclubs-flightengine.onrender.com", // Allow requests from your React app
+    origin: "http://localhost:3000", // Allow requests from your React app
     credentials: true,
   }),
 )
@@ -18,15 +18,18 @@ app.use(express.json())
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/fareclubs"
 
 mongoose
-  .connect(MONGODB_URI)
+  .connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 30000, // Keep trying to send operations for 30 seconds
+    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+  })
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err))
 
 // Use airport routes
 app.use("/api/airports", airportRoutes)
 
-const SHARED_API_BASE_URL = "https://Sharedapi.tektravels.com/SharedData.svc/rest"
-const AIR_API_BASE_URL = "https://api.tektravels.com/BookingEngineService_Air/AirService.svc/rest"
+const SHARED_API_BASE_URL = "http://Sharedapi.tektravels.com/SharedData.svc/rest"
+const AIR_API_BASE_URL = "http://api.tektravels.com/BookingEngineService_Air/AirService.svc/rest"
 
 // Authentication endpoint
 app.post("/api/auth", async (req, res) => {
@@ -255,7 +258,7 @@ app.post("/api/search", async (req, res) => {
         Response: {
           ResponseStatus: 1,
           Error: { ErrorCode: 0, ErrorMessage: "" },
-          TraceId: req.body.TokenId,
+          TraceId: req.body.TokenId + "-multi-" + Date.now(),
           Results: allResults,
         },
       }
