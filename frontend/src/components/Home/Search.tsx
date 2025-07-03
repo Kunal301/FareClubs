@@ -11,6 +11,7 @@ import { useDatePicker } from "../../hooks/useDatePicker"
 import { getTodayStart } from "../../utils/dateUtils"
 import { validateMultiCityDates, checkConnectingCities } from "../../utils/ValidateMultiCity"
 import AirportAutocomplete from "../ui/AirportAutocomplete"
+import axios from "axios" // Import axios
 
 interface SearchProps {
   sessionId: string
@@ -21,6 +22,9 @@ interface CityPair {
   to: string
   date: string
 }
+
+// Define the base URL for the backend API using the existing environment variable
+const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5000" // Fallback for local development
 
 const Search: React.FC<SearchProps> = ({ sessionId }) => {
   const navigate = useNavigate()
@@ -419,27 +423,86 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
         }),
       )
 
-      navigate("/search-results", {
-        state: {
-          searchParams: {
-            from: searchParams.from,
-            to: searchParams.to,
-            date: searchParams.date,
-            returnDate: finalReturnDate,
-            passengers: searchParams.passengers,
-            tripType: searchParams.tripType,
-            fareType: searchParams.fareType,
-            preferredAirlines: searchParams.preferredAirlines,
-            directFlight: searchParams.directFlight,
-            multiCityTrips: searchParams.multiCityTrips,
-            journeyType,
-            resultFareType,
-            sources,
-          },
-          sessionId,
-          shouldSearch: true,
+      // Make the actual search API call using axios and the API_BASE_URL
+      const searchRequest = {
+        EndUserIp: "192.168.1.1",
+        TokenId: tokenId,
+        AdultCount: searchParams.passengers.toString(),
+        ChildCount: "0",
+        InfantCount: "0",
+        DirectFlight: searchParams.directFlight ? "true" : "false",
+        OneStopFlight: "false",
+        JourneyType: journeyType,
+        Segments:
+          searchParams.tripType === "multi-city"
+            ? searchParams.multiCityTrips.map((trip) => ({
+                Origin: trip.from,
+                Destination: trip.to,
+                FlightCabinClass: "1",
+                PreferredDepartureTime: formatDateForApi(trip.date),
+                PreferredArrivalTime: formatDateForApi(trip.date),
+              }))
+            : [
+                {
+                  Origin: searchParams.from,
+                  Destination: searchParams.to,
+                  FlightCabinClass: "1",
+                  PreferredDepartureTime: formatDateForApi(searchParams.date),
+                  PreferredArrivalTime: formatDateForApi(searchParams.date),
+                },
+                ...(searchParams.tripType === "round-trip" && finalReturnDate
+                  ? [
+                      {
+                        Origin: searchParams.to,
+                        Destination: searchParams.from,
+                        FlightCabinClass: "1",
+                        PreferredDepartureTime: formatDateForApi(finalReturnDate),
+                        PreferredArrivalTime: formatDateForApi(finalReturnDate),
+                      },
+                    ]
+                  : []),
+              ],
+        ResultFareType: resultFareType,
+        PreferredAirlines: preferredAirlines,
+        Sources: sources,
+      }
+
+      const response = await axios.post(`${API_BASE_URL}/api/search`, searchRequest, {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
+        timeout: 30000, // 30 seconds timeout
       })
+
+      if (response.data?.Response?.ResponseStatus === 1 && response.data?.Response?.TraceId) {
+        localStorage.setItem("traceId", response.data.Response.TraceId)
+        // Proceed with navigation only if search is successful
+        navigate("/search-results", {
+          state: {
+            searchParams: {
+              from: searchParams.from,
+              to: searchParams.to,
+              date: searchParams.date,
+              returnDate: finalReturnDate,
+              passengers: searchParams.passengers,
+              tripType: searchParams.tripType,
+              fareType: searchParams.fareType,
+              preferredAirlines: searchParams.preferredAirlines,
+              directFlight: searchParams.directFlight,
+              multiCityTrips: searchParams.multiCityTrips,
+              journeyType,
+              resultFareType,
+              sources,
+            },
+            sessionId,
+            shouldSearch: true,
+            traceId: response.data.Response.TraceId, // Pass the new traceId
+          },
+        })
+      } else {
+        setError(response.data?.Response?.Error?.ErrorMessage || "Flight search failed. Please try again.")
+      }
     } catch (error) {
       console.error("Search error:", error)
       setError("Failed to search for flights. Please try again.")
@@ -576,7 +639,6 @@ const Search: React.FC<SearchProps> = ({ sessionId }) => {
                     className="w-full bg-transparent p-0 text-black font-bold text-sm focus:outline-none uppercase"
                     required
                     name="to"
-                    showPopularAirports={true}
                     country="IN"
                   />
                 </div>

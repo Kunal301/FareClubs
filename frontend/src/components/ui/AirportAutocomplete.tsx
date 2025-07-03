@@ -30,6 +30,9 @@ interface AirportAutocompleteProps {
   country?: string
 }
 
+// Define the base URL for the backend API using the existing environment variable
+const API_BASE_URL = process.env.REACT_APP_API_URL || "" // Will be empty string if not set, leading to relative path
+
 const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
   value,
   onChange,
@@ -70,8 +73,9 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
       }
 
       try {
+        // Use API_BASE_URL for the fetch call
         const response = await fetch(
-          `/api/airports/search?q=${encodeURIComponent(query)}&limit=10${country ? `&country=${country}` : ""}`,
+          `${API_BASE_URL}/api/airports/search?q=${encodeURIComponent(query)}&limit=10${country ? `&country=${country}` : ""}`,
         )
 
         if (!response.ok) {
@@ -98,8 +102,8 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
       // If parent provides a value (IATA code) and it's different from current selection
       const fetchAirportDetails = async () => {
         try {
-          // Fetch airport details from backend using the IATA code
-          const response = await fetch(`/api/airports/${encodeURIComponent(value)}`)
+          // Use API_BASE_URL for the fetch call
+          const response = await fetch(`${API_BASE_URL}/api/airports/${encodeURIComponent(value)}`)
           if (response.ok) {
             const data: Airport = await response.json()
             setSelectedAirportDetails(data)
@@ -132,7 +136,8 @@ const AirportAutocomplete: React.FC<AirportAutocompleteProps> = ({
     if (showPopularAirports) {
       const fetchPopularAirports = async () => {
         try {
-          const response = await fetch(`/api/airports/popular/${country}?limit=12`)
+          // Use API_BASE_URL for the fetch call
+          const response = await fetch(`${API_BASE_URL}/api/airports/popular/${country}?limit=12`)
           if (!response.ok) {
             const errorText = await response.text()
             console.error("Failed to fetch popular airports. Status:", response.status, "Response:", errorText)
